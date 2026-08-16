@@ -1,0 +1,346 @@
+return function(ctx)
+	local mk = ctx.mk
+	local tw = ctx.tw
+	local udim2 = ctx.udim2
+	local vec2 = ctx.vec2
+	local rgb = rgb or ctx.rgb
+
+	local Module = {}
+
+	local defaultLangTexts = {
+		EN = {
+			title = "MAIN MENU",
+			subStart = "Select an option to continue",
+			subPass = "Enter password to access",
+			subErr = "Incorrect password, try again",
+			start = "Start",
+			leave = "Leave",
+			langBtn = "English",
+			passHolder = "Enter Password",
+			submit = "Submit",
+			back = "Back",
+			loading = "LOADING MODULES...",
+			complete = "LOAD COMPLETE!",
+			panelTitle = "CONTROL PANEL",
+			tabs = {
+				Main = "Main",
+				Combat = "Combat",
+				Visuals = "Visuals",
+				Settings = "Settings"
+			},
+			sections = {
+				actions = "Actions",
+				toggles = "Toggles",
+				sliders = "Sliders",
+				dropdowns = "Dropdowns",
+				colors = "Colors",
+				settingsSuffix = " Settings"
+			}
+		},
+		RU = {
+			title = "ГЛАВНОЕ МЕНЮ",
+			subStart = "Выберите параметр для продолжения",
+			subPass = "Введите пароль для доступа",
+			subErr = "Неверный пароль, попробуйте еще раз",
+			start = "Старт",
+			leave = "Выход",
+			langBtn = "Русский",
+			passHolder = "Введите пароль",
+			submit = "Отправить",
+			back = "Назад",
+			loading = "ЗАГРУЗКА МОДУЛЕЙ...",
+			complete = "ЗАГРУЗКА ЗАВЕРШЕНА!",
+			panelTitle = "ПАНЕЛЬ УПРАВЛЕНИЯ",
+			tabs = {
+				Main = "Главная",
+				Combat = "Бой",
+				Visuals = "Визуалы",
+				Settings = "Настройки"
+			},
+			sections = {
+				actions = "Действия",
+				toggles = "Переключатели",
+				sliders = "Ползунки",
+				dropdowns = "Списки",
+				colors = "Цвета",
+				settingsSuffix = " Настройки"
+			}
+		}
+	}
+
+	local function createButton(text, color, parent, order)
+		local btn = mk("TextButton", {
+			Size = udim2(0, 220, 0, 44),
+			AnchorPoint = vec2(0.5, 0.5),
+			BackgroundColor3 = color,
+			BackgroundTransparency = 1,
+			Text = text,
+			TextColor3 = rgb(255, 255, 255),
+			TextTransparency = 1,
+			TextSize = 15,
+			Font = Enum.Font.GothamBold,
+			AutoButtonColor = false,
+			Modal = true,
+			LayoutOrder = order or 1,
+			ZIndex = 1000005
+		}, parent)
+
+		mk("UICorner", { CornerRadius = UDim.new(0, 10) }, btn)
+		return btn
+	end
+
+	local function bindHoverEffect(btn, normColor, hoverColor)
+		btn.MouseEnter:Connect(function()
+			if btn.Visible and not (ctx.isClosing and ctx.isClosing()) then
+				tw(btn, 0.15, { BackgroundColor3 = hoverColor, Size = udim2(0, 228, 0, 46) })
+			end
+		end)
+		btn.MouseLeave:Connect(function()
+			if btn.Visible and not (ctx.isClosing and ctx.isClosing()) then
+				tw(btn, 0.15, { BackgroundColor3 = normColor, Size = udim2(0, 220, 0, 44) })
+			end
+		end)
+	end
+
+	function Module.CreateAuthMenu(parent, config)
+		config = config or {}
+		local correctPassword = config.password or "1234"
+		local currentLang = config.defaultLang or "EN"
+		
+		local langTexts = defaultLangTexts
+		if config.customTexts then
+			for l, tMap in pairs(config.customTexts) do
+				if langTexts[l] then
+					for k, v in pairs(tMap) do
+						langTexts[l][k] = v
+					end
+				else
+					langTexts[l] = tMap
+				end
+			end
+		end
+
+		local onSuccess = config.onSuccess or function() end
+		local onLeave = config.onLeave or function() game:Shutdown() end
+
+		local isTransitioning = false
+
+		local card = mk("Frame", {
+			Size = udim2(0, 270, 0, 280),
+			AnchorPoint = vec2(0.5, 0.5),
+			Position = udim2(0.5, 0, 0.5, 0),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = 1000000
+		}, parent)
+
+		local title = mk("TextLabel", {
+			Size = udim2(1, 0, 0, 30),
+			AnchorPoint = vec2(0.5, 0.5),
+			Position = udim2(0.5, 0, 0, 22),
+			BackgroundTransparency = 1,
+			Text = langTexts[currentLang].title,
+			TextColor3 = rgb(255, 255, 255),
+			TextTransparency = 1,
+			TextSize = 20,
+			Font = Enum.Font.GothamBold,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			TextYAlignment = Enum.TextYAlignment.Center,
+			ZIndex = 1000005
+		}, card)
+
+		local subTitle = mk("TextLabel", {
+			Size = udim2(1, 0, 0, 20),
+			AnchorPoint = vec2(0.5, 0.5),
+			Position = udim2(0.5, 0, 0, 48),
+			BackgroundTransparency = 1,
+			Text = langTexts[currentLang].subStart,
+			TextColor3 = rgb(140, 140, 155),
+			TextTransparency = 1,
+			TextSize = 12,
+			Font = Enum.Font.GothamMedium,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			TextYAlignment = Enum.TextYAlignment.Center,
+			ZIndex = 1000005
+		}, card)
+
+		local mainContainer = mk("Frame", {
+			Size = udim2(1, 0, 0, 200),
+			AnchorPoint = vec2(0.5, 0),
+			Position = udim2(0.5, 0, 0, 72),
+			BackgroundTransparency = 1,
+			ZIndex = 1000005
+		}, card)
+
+		mk("UIListLayout", {
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			Padding = UDim.new(0, 10),
+			HorizontalAlignment = Enum.HorizontalAlignment.Center,
+			VerticalAlignment = Enum.VerticalAlignment.Top
+		}, mainContainer)
+
+		local startBtn = createButton(langTexts[currentLang].start, rgb(25, 175, 100), mainContainer, 1)
+		local leaveBtn = createButton(langTexts[currentLang].leave, rgb(215, 35, 55), mainContainer, 2)
+		local langBtn  = createButton(langTexts[currentLang].langBtn, rgb(60, 60, 75), mainContainer, 3)
+
+		local passContainer = mk("Frame", {
+			Size = udim2(1, 0, 0, 200),
+			AnchorPoint = vec2(0.5, 0),
+			Position = udim2(0.5, 0, 0, 72),
+			BackgroundTransparency = 1,
+			ZIndex = 1000005,
+			Visible = false
+		}, card)
+
+		mk("UIListLayout", {
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			Padding = UDim.new(0, 10),
+			HorizontalAlignment = Enum.HorizontalAlignment.Center,
+			VerticalAlignment = Enum.VerticalAlignment.Top
+		}, passContainer)
+
+		local passInput = mk("TextBox", {
+			Size = udim2(0, 220, 0, 44),
+			AnchorPoint = vec2(0.5, 0.5),
+			BackgroundColor3 = rgb(20, 20, 25),
+			BackgroundTransparency = 1,
+			Text = "",
+			PlaceholderText = langTexts[currentLang].passHolder,
+			PlaceholderColor3 = rgb(0, 0, 0),
+			TextColor3 = rgb(255, 255, 255),
+			TextTransparency = 1,
+			TextSize = 14,
+			Font = Enum.Font.GothamMedium,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			ClearTextOnFocus = false,
+			LayoutOrder = 1,
+			ZIndex = 1000006
+		}, passContainer)
+
+		mk("UICorner", { CornerRadius = UDim.new(0, 10) }, passInput)
+
+		local submitBtn = createButton(langTexts[currentLang].submit, rgb(25, 175, 100), passContainer, 2)
+		local backBtn   = createButton(langTexts[currentLang].back, rgb(60, 60, 75), passContainer, 3)
+
+		bindHoverEffect(startBtn, rgb(25, 175, 100), rgb(30, 200, 115))
+		bindHoverEffect(leaveBtn, rgb(215, 35, 55), rgb(245, 45, 65))
+		bindHoverEffect(langBtn,  rgb(60, 60, 75), rgb(80, 80, 95))
+		bindHoverEffect(submitBtn, rgb(25, 175, 100), rgb(30, 200, 115))
+		bindHoverEffect(backBtn,   rgb(60, 60, 75), rgb(80, 80, 95))
+
+		tw(title, 0.4, { TextTransparency = 0 })
+		tw(subTitle, 0.4, { TextTransparency = 0 })
+		tw(startBtn, 0.4, { BackgroundTransparency = 0, TextTransparency = 0 })
+		tw(leaveBtn, 0.4, { BackgroundTransparency = 0, TextTransparency = 0 })
+		tw(langBtn, 0.4, { BackgroundTransparency = 0, TextTransparency = 0 })
+
+		local function changeSubTitle(newText, newColor)
+			tw(subTitle, 0.18, { TextTransparency = 1, Position = udim2(0.5, 0, 0, 40) }).Completed:Connect(function()
+				subTitle.Text = newText
+				subTitle.TextColor3 = newColor or rgb(140, 140, 155)
+				subTitle.Position = udim2(0.5, 0, 0, 56)
+				tw(subTitle, 0.18, { TextTransparency = 0, Position = udim2(0.5, 0, 0, 48) })
+			end)
+		end
+
+		local function changeTitle(newText)
+			tw(title, 0.18, { TextTransparency = 1, Position = udim2(0.5, 0, 0, 14) }).Completed:Connect(function()
+				title.Text = newText
+				title.Position = udim2(0.5, 0, 0, 30)
+				tw(title, 0.18, { TextTransparency = 0, Position = udim2(0.5, 0, 0, 22) })
+			end)
+		end
+
+		local function applyLanguage()
+			local t = langTexts[currentLang]
+			changeTitle(t.title)
+			changeSubTitle(t.subStart)
+
+			startBtn.Text = t.start
+			leaveBtn.Text = t.leave
+			langBtn.Text = t.langBtn
+			passInput.PlaceholderText = t.passHolder
+			submitBtn.Text = t.submit
+			backBtn.Text = t.back
+		end
+
+		langBtn.MouseButton1Click:Connect(function()
+			if isTransitioning then return end
+			currentLang = (currentLang == "EN") and "RU" or "EN"
+			applyLanguage()
+		end)
+
+		startBtn.MouseButton1Click:Connect(function()
+			if isTransitioning then return end
+			isTransitioning = true
+
+			tw(startBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(leaveBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(langBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+
+			changeSubTitle(langTexts[currentLang].subPass)
+
+			task.wait(0.25)
+
+			mainContainer.Visible = false
+			passContainer.Visible = true
+
+			tw(passInput, 0.35, { BackgroundTransparency = 0, TextTransparency = 0, PlaceholderColor3 = rgb(120, 120, 135) }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+			tw(submitBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+			tw(backBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+			task.wait(0.35)
+			isTransitioning = false
+		end)
+
+		backBtn.MouseButton1Click:Connect(function()
+			if isTransitioning then return end
+			isTransitioning = true
+
+			tw(passInput, 0.25, { BackgroundTransparency = 1, TextTransparency = 1, PlaceholderColor3 = rgb(0, 0, 0) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(submitBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(backBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+
+			changeSubTitle(langTexts[currentLang].subStart)
+
+			task.wait(0.25)
+
+			passContainer.Visible = false
+			passInput.Text = ""
+			mainContainer.Visible = true
+
+			tw(startBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+			tw(leaveBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+			tw(langBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+			task.wait(0.35)
+			isTransitioning = false
+		end)
+
+		leaveBtn.MouseButton1Click:Connect(function()
+			if onLeave then onLeave() end
+		end)
+
+		submitBtn.MouseButton1Click:Connect(function()
+			if isTransitioning then return end
+			if passInput.Text == correctPassword then
+				onSuccess(card, passInput, submitBtn, backBtn, title, subTitle, currentLang, langTexts[currentLang])
+			else
+				changeSubTitle(langTexts[currentLang].subErr, rgb(255, 70, 70))
+				tw(passInput, 0.08, { Position = udim2(0.5, 8, 0, 0) }).Completed:Connect(function()
+					tw(passInput, 0.08, { Position = udim2(0.5, -8, 0, 0) }).Completed:Connect(function()
+						tw(passInput, 0.08, { Position = udim2(0.5, 0, 0, 0) })
+					end)
+				end)
+			end
+		end)
+
+		return {
+			card = card,
+			getCurrentLang = function() return currentLang end,
+			getLangTexts = function() return langTexts[currentLang] end
+		}
+	end
+
+	return Module
+end
