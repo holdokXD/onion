@@ -1,0 +1,116 @@
+return function(ctx)
+	local mk, tw, udim2, vec2, rgb = ctx.mk, ctx.tw, ctx.udim2, ctx.vec2, ctx.rgb
+	local makeBox, UIS = ctx.makeBox, ctx.UIS
+	local clamp, floor = math.clamp, math.floor
+
+	local function createSliderCore(frame, text, minVal, maxVal, defaultVal, callback, textOffset, valWidth)
+		local val, activeInput = defaultVal or minVal, nil
+
+		mk("TextLabel", {
+			Size = udim2(1, textOffset, 0, 22),
+			Position = udim2(0, 8, 0, 4),
+			BackgroundTransparency = 1,
+			Text = text,
+			TextColor3 = rgb(220, 220, 230),
+			TextSize = 11,
+			Font = Enum.Font.GothamMedium,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			ZIndex = 2000008
+		}, frame)
+
+		local valInput = mk("TextBox", {
+			Size = udim2(0, valWidth, 0, 22),
+			Position = udim2(1, -(valWidth + 5), 0, 4),
+			BackgroundTransparency = 1,
+			Text = tostring(val),
+			TextColor3 = rgb(160, 160, 175),
+			TextSize = 11,
+			Font = Enum.Font.GothamMedium,
+			TextXAlignment = Enum.TextXAlignment.Right,
+			ClearTextOnFocus = false,
+			ZIndex = 2000010
+		}, frame)
+
+		local track = mk("Frame", {
+			Size = udim2(1, -16, 0, 5),
+			Position = udim2(0, 8, 1, -12),
+			BackgroundColor3 = rgb(45, 45, 55),
+			BorderSizePixel = 0,
+			ZIndex = 2000008
+		}, frame)
+		mk("UICorner", {CornerRadius = UDim.new(1, 0)}, track)
+
+		local trackArea = mk("TextButton", {
+			Size = udim2(1, 0, 0, 20),
+			AnchorPoint = vec2(0, 0.5),
+			Position = udim2(0, 0, 0.5, 0),
+			BackgroundTransparency = 1,
+			Text = "",
+			AutoButtonColor = false,
+			ZIndex = 2000009
+		}, track)
+
+		local fill = mk("Frame", {
+			Size = udim2(clamp((val - minVal) / (maxVal - minVal), 0, 1), 0, 1, 0),
+			BackgroundColor3 = rgb(25, 175, 100),
+			BorderSizePixel = 0,
+			ZIndex = 2000009
+		}, track)
+		mk("UICorner", {CornerRadius = UDim.new(1, 0)}, fill)
+
+		local function setVal(v)
+			val = clamp(floor(v + 0.5), minVal, maxVal)
+			valInput.Text = tostring(val)
+			tw(fill, 0.08, {Size = udim2(clamp((val - minVal) / (maxVal - minVal), 0, 1), 0, 1, 0)})
+			if callback then callback(val) end
+		end
+
+		local function updateSlider(inp)
+			setVal(minVal + (maxVal - minVal) * clamp((inp.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1))
+		end
+
+		trackArea.InputBegan:Connect(function(inp)
+			if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) and not ctx.getActiveSliderInput() then
+				ctx.setActiveSliderInput(inp)
+				activeInput = inp
+				updateSlider(inp)
+			end
+		end)
+
+		UIS.InputChanged:Connect(function(inp)
+			if activeInput and inp == activeInput then updateSlider(inp) end
+		end)
+
+		UIS.InputEnded:Connect(function(inp)
+			if activeInput and inp == activeInput then
+				activeInput = nil
+				ctx.setActiveSliderInput(nil)
+			end
+		end)
+
+		valInput.FocusLost:Connect(function() setVal(tonumber(valInput.Text) or val) end)
+	end
+
+	return {
+		AddSlider = function(parent, text, minVal, maxVal, defaultVal, callback)
+			local frame, _, setHover = makeBox(parent, udim2(1, -10, 0, 48))
+			createSliderCore(frame, text, minVal, maxVal, defaultVal, callback, -70, 50)
+			frame.MouseEnter:Connect(function() setHover(true) end)
+			frame.MouseLeave:Connect(function() setHover(false) end)
+		end,
+
+		AddDualSlider = function(parent, text1, min1, max1, def1, cb1, text2, min2, max2, def2, cb2)
+			local rowFrame = mk("Frame", {Size = udim2(1, -10, 0, 48), BackgroundTransparency = 1, ZIndex = 2000007}, parent)
+
+			local f1, _, h1 = makeBox(rowFrame, udim2(0.5, -4, 1, 0), udim2(0, 0, 0, 0), vec2(0, 0))
+			createSliderCore(f1, text1, min1, max1, def1, cb1, -45, 35)
+			f1.MouseEnter:Connect(function() h1(true) end)
+			f1.MouseLeave:Connect(function() h1(false) end)
+
+			local f2, _, h2 = makeBox(rowFrame, udim2(0.5, -4, 1, 0), udim2(1, 0, 0, 0), vec2(1, 0))
+			createSliderCore(f2, text2, min2, max2, def2, cb2, -45, 35)
+			f2.MouseEnter:Connect(function() h2(true) end)
+			f2.MouseLeave:Connect(function() h2(false) end)
+		end
+	}
+end
