@@ -1,0 +1,50 @@
+return function(ctx)
+	local mk, tw, udim2, vec2, rgb = ctx.mk, ctx.tw, ctx.udim2, ctx.vec2, ctx.rgb
+	local makeBox = ctx.makeBox
+
+	local function makeInteractiveBtn(container, text, callback, setHover)
+		local btn = mk("TextButton", {
+			Size = udim2(1, 0, 1, 0),
+			AnchorPoint = vec2(0.5, 0.5),
+			Position = udim2(0.5, 0, 0.5, 0),
+			BackgroundTransparency = 1,
+			Text = text,
+			TextColor3 = rgb(230, 230, 240),
+			TextSize = 13,
+			Font = Enum.Font.GothamMedium,
+			AutoButtonColor = false,
+			ZIndex = 2000008
+		}, container)
+
+		btn.MouseEnter:Connect(function() setHover(true) tw(btn, 0.12, {Size = udim2(1, 4, 1, 2)}) end)
+		btn.MouseLeave:Connect(function() setHover(false) tw(btn, 0.12, {Size = udim2(1, 0, 1, 0)}) end)
+		btn.MouseButton1Click:Connect(function()
+			if ctx.isClosing() then return end
+			tw(btn, 0.08, {Size = udim2(1, -4, 1, -2)}).Completed:Connect(function()
+				tw(btn, 0.08, {Size = udim2(1, 4, 1, 2)})
+			end)
+			if callback then callback() end
+		end)
+	end
+
+	return {
+		AddBtn = function(parent, text, callback)
+			local container, _, setHover = makeBox(parent)
+			makeInteractiveBtn(container, text, callback, setHover)
+		end,
+
+		AddDualBtn = function(parent, text1, callback1, text2, callback2)
+			local rowFrame = mk("Frame", {
+				Size = udim2(1, -10, 0, 38),
+				BackgroundTransparency = 1,
+				ZIndex = 2000007
+			}, parent)
+
+			local c1, _, h1 = makeBox(rowFrame, udim2(0.5, -4, 1, 0), udim2(0, 0, 0, 0), vec2(0, 0))
+			makeInteractiveBtn(c1, text1, callback1, h1)
+
+			local c2, _, h2 = makeBox(rowFrame, udim2(0.5, -4, 1, 0), udim2(1, 0, 0, 0), vec2(1, 0))
+			makeInteractiveBtn(c2, text2, callback2, h2)
+		end
+	}
+end
