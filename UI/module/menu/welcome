@@ -61,13 +61,13 @@ return function(ctx)
 
 	local function bindHoverEffect(btn, normColor, hoverColor)
 		btn.MouseEnter:Connect(function()
-			if btn.Visible and not (ctx.isClosing and ctx.isClosing()) then
-				tw(btn, 0.15, { BackgroundColor3 = hoverColor, Size = udim2(0, 228, 0, 46) })
+			if btn.Visible and btn.TextTransparency < 0.5 and not (ctx.isClosing and ctx.isClosing()) then
+				tw(btn, 0.2, { BackgroundColor3 = hoverColor, Size = udim2(0, 228, 0, 46) }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 			end
 		end)
 		btn.MouseLeave:Connect(function()
 			if btn.Visible and not (ctx.isClosing and ctx.isClosing()) then
-				tw(btn, 0.15, { BackgroundColor3 = normColor, Size = udim2(0, 220, 0, 44) })
+				tw(btn, 0.2, { BackgroundColor3 = normColor, Size = udim2(0, 220, 0, 44) }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 			end
 		end)
 	end
@@ -198,33 +198,40 @@ return function(ctx)
 		bindHoverEffect(submitBtn, rgb(25, 175, 100), rgb(30, 200, 115))
 		bindHoverEffect(backBtn,   rgb(60, 60, 75), rgb(80, 80, 95))
 
-		tw(title, 0.4, { TextTransparency = 0 })
-		tw(subTitle, 0.4, { TextTransparency = 0 })
-		tw(startBtn, 0.4, { BackgroundTransparency = 0, TextTransparency = 0 })
-		tw(leaveBtn, 0.4, { BackgroundTransparency = 0, TextTransparency = 0 })
-		tw(langBtn, 0.4, { BackgroundTransparency = 0, TextTransparency = 0 })
+		tw(title, 0.45, { TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+		tw(subTitle, 0.45, { TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+		tw(startBtn, 0.45, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+		tw(leaveBtn, 0.45, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+		tw(langBtn, 0.45, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
 		local function changeSubTitle(newText, newColor)
-			tw(subTitle, 0.18, { TextTransparency = 1 }).Completed:Connect(function()
+			tw(subTitle, 0.15, { TextTransparency = 1, Position = udim2(0.5, 0, 0, 42) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In).Completed:Connect(function()
 				subTitle.Text = newText
 				subTitle.TextColor3 = newColor or rgb(140, 140, 155)
-				subTitle.Position = udim2(0.5, 0, 0, 48)
-				tw(subTitle, 0.18, { TextTransparency = 0 })
+				subTitle.Position = udim2(0.5, 0, 0, 54)
+				tw(subTitle, 0.2, { TextTransparency = 0, Position = udim2(0.5, 0, 0, 48) }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 			end)
 		end
 
 		local function changeTitle(newText)
-			tw(title, 0.18, { TextTransparency = 1 }).Completed:Connect(function()
+			tw(title, 0.15, { TextTransparency = 1, Position = udim2(0.5, 0, 0, 16) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In).Completed:Connect(function()
 				title.Text = newText
-				title.Position = udim2(0.5, 0, 0, 22)
-				tw(title, 0.18, { TextTransparency = 0 })
+				title.Position = udim2(0.5, 0, 0, 28)
+				tw(title, 0.2, { TextTransparency = 0, Position = udim2(0.5, 0, 0, 22) }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 			end)
 		end
 
-		local function applyLanguage()
+		local function animateLangSwitch()
+			isTransitioning = true
 			local t = langTexts[currentLang]
+
+			tw(startBtn, 0.12, { TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(leaveBtn, 0.12, { TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(langBtn, 0.12, { TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 			changeTitle(t.title)
 			changeSubTitle(t.subStart)
+
+			task.wait(0.14)
 
 			startBtn.Text = t.start
 			leaveBtn.Text = t.leave
@@ -232,34 +239,49 @@ return function(ctx)
 			passInput.PlaceholderText = t.passHolder
 			submitBtn.Text = t.submit
 			backBtn.Text = t.back
+
+			tw(startBtn, 0.2, { TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+			tw(leaveBtn, 0.2, { TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+			tw(langBtn, 0.2, { TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+			task.wait(0.2)
+			isTransitioning = false
 		end
 
 		langBtn.MouseButton1Click:Connect(function()
 			if isTransitioning then return end
 			currentLang = (currentLang == "EN") and "RU" or "EN"
-			applyLanguage()
+			animateLangSwitch()
 		end)
 
 		startBtn.MouseButton1Click:Connect(function()
 			if isTransitioning then return end
 			isTransitioning = true
 
-			tw(startBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
-			tw(leaveBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
-			tw(langBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(startBtn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1, Size = udim2(0, 200, 0, 40) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(leaveBtn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1, Size = udim2(0, 200, 0, 40) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(langBtn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1, Size = udim2(0, 200, 0, 40) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
 			changeSubTitle(langTexts[currentLang].subPass)
 
-			task.wait(0.25)
+			task.wait(0.2)
 
 			mainContainer.Visible = false
 			passContainer.Visible = true
 
-			tw(passInput, 0.35, { BackgroundTransparency = 0, TextTransparency = 0, PlaceholderColor3 = rgb(120, 120, 135) }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-			tw(submitBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-			tw(backBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+			startBtn.Size = udim2(0, 220, 0, 44)
+			leaveBtn.Size = udim2(0, 220, 0, 44)
+			langBtn.Size = udim2(0, 220, 0, 44)
 
-			task.wait(0.35)
+			passInput.Size = udim2(0, 200, 0, 40)
+			submitBtn.Size = udim2(0, 200, 0, 40)
+			backBtn.Size = udim2(0, 200, 0, 40)
+
+			tw(passInput, 0.25, { BackgroundTransparency = 0, TextTransparency = 0, Size = udim2(0, 220, 0, 44), PlaceholderColor3 = rgb(120, 120, 135) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			tw(submitBtn, 0.25, { BackgroundTransparency = 0, TextTransparency = 0, Size = udim2(0, 220, 0, 44) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			tw(backBtn, 0.25, { BackgroundTransparency = 0, TextTransparency = 0, Size = udim2(0, 220, 0, 44) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
+			task.wait(0.25)
 			isTransitioning = false
 		end)
 
@@ -267,23 +289,31 @@ return function(ctx)
 			if isTransitioning then return end
 			isTransitioning = true
 
-			tw(passInput, 0.25, { BackgroundTransparency = 1, TextTransparency = 1, PlaceholderColor3 = rgb(0, 0, 0) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
-			tw(submitBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
-			tw(backBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(passInput, 0.2, { BackgroundTransparency = 1, TextTransparency = 1, Size = udim2(0, 200, 0, 40), PlaceholderColor3 = rgb(0, 0, 0) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(submitBtn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1, Size = udim2(0, 200, 0, 40) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(backBtn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1, Size = udim2(0, 200, 0, 40) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
 			changeSubTitle(langTexts[currentLang].subStart)
 
-			task.wait(0.25)
+			task.wait(0.2)
 
 			passContainer.Visible = false
 			passInput.Text = ""
 			mainContainer.Visible = true
 
-			tw(startBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-			tw(leaveBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-			tw(langBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+			passInput.Size = udim2(0, 220, 0, 44)
+			submitBtn.Size = udim2(0, 220, 0, 44)
+			backBtn.Size = udim2(0, 220, 0, 44)
 
-			task.wait(0.35)
+			startBtn.Size = udim2(0, 200, 0, 40)
+			leaveBtn.Size = udim2(0, 200, 0, 40)
+			langBtn.Size = udim2(0, 200, 0, 40)
+
+			tw(startBtn, 0.25, { BackgroundTransparency = 0, TextTransparency = 0, Size = udim2(0, 220, 0, 44) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			tw(leaveBtn, 0.25, { BackgroundTransparency = 0, TextTransparency = 0, Size = udim2(0, 220, 0, 44) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			tw(langBtn, 0.25, { BackgroundTransparency = 0, TextTransparency = 0, Size = udim2(0, 220, 0, 44) }, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
+			task.wait(0.25)
 			isTransitioning = false
 		end)
 
@@ -295,18 +325,18 @@ return function(ctx)
 			if isTransitioning then return end
 			if passInput.Text == correctPassword then
 				isTransitioning = true
-				tw(title, 0.25, { TextTransparency = 1 })
-				tw(subTitle, 0.25, { TextTransparency = 1 })
-				tw(passInput, 0.25, { BackgroundTransparency = 1, TextTransparency = 1, PlaceholderColor3 = rgb(0, 0, 0) })
-				tw(submitBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 })
-				tw(backBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 })
-				task.wait(0.25)
+				tw(title, 0.2, { TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+				tw(subTitle, 0.2, { TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+				tw(passInput, 0.2, { BackgroundTransparency = 1, TextTransparency = 1, PlaceholderColor3 = rgb(0, 0, 0) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+				tw(submitBtn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+				tw(backBtn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+				task.wait(0.22)
 				onSuccess(card, currentLang, langTexts[currentLang])
 			else
 				changeSubTitle(langTexts[currentLang].subErr, rgb(255, 70, 70))
-				tw(passInput, 0.06, { Position = udim2(0, 8, 0, 0) }).Completed:Connect(function()
-					tw(passInput, 0.06, { Position = udim2(0, -8, 0, 0) }).Completed:Connect(function()
-						tw(passInput, 0.06, { Position = udim2(0, 0, 0, 0) })
+				tw(passInput, 0.05, { Position = udim2(0.5, 6, 0, 0) }).Completed:Connect(function()
+					tw(passInput, 0.05, { Position = udim2(0.5, -6, 0, 0) }).Completed:Connect(function()
+						tw(passInput, 0.05, { Position = udim2(0.5, 0, 0, 0) })
 					end)
 				end)
 			end
