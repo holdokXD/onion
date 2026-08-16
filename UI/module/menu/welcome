@@ -20,22 +20,7 @@ return function(ctx)
 			submit = "Submit",
 			back = "Back",
 			loading = "LOADING MODULES...",
-			complete = "LOAD COMPLETE!",
-			panelTitle = "CONTROL PANEL",
-			tabs = {
-				Main = "Main",
-				Combat = "Combat",
-				Visuals = "Visuals",
-				Settings = "Settings"
-			},
-			sections = {
-				actions = "Actions",
-				toggles = "Toggles",
-				sliders = "Sliders",
-				dropdowns = "Dropdowns",
-				colors = "Colors",
-				settingsSuffix = " Settings"
-			}
+			complete = "LOAD COMPLETE!"
 		},
 		RU = {
 			title = "ГЛАВНОЕ МЕНЮ",
@@ -49,22 +34,7 @@ return function(ctx)
 			submit = "Отправить",
 			back = "Назад",
 			loading = "ЗАГРУЗКА МОДУЛЕЙ...",
-			complete = "ЗАГРУЗКА ЗАВЕРШЕНА!",
-			panelTitle = "ПАНЕЛЬ УПРАВЛЕНИЯ",
-			tabs = {
-				Main = "Главная",
-				Combat = "Бой",
-				Visuals = "Визуалы",
-				Settings = "Настройки"
-			},
-			sections = {
-				actions = "Действия",
-				toggles = "Переключатели",
-				sliders = "Ползунки",
-				dropdowns = "Списки",
-				colors = "Цвета",
-				settingsSuffix = " Настройки"
-			}
+			complete = "ЗАГРУЗКА ЗАВЕРШЕНА!"
 		}
 	}
 
@@ -331,7 +301,7 @@ return function(ctx)
 				tw(submitBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 })
 				tw(backBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 })
 				task.wait(0.25)
-				onSuccess(card, passInput, submitBtn, backBtn, title, subTitle, currentLang, langTexts[currentLang])
+				onSuccess(card, currentLang, langTexts[currentLang])
 			else
 				changeSubTitle(langTexts[currentLang].subErr, rgb(255, 70, 70))
 				tw(passInput, 0.06, { Position = udim2(0, 8, 0, 0) }).Completed:Connect(function()
@@ -344,8 +314,7 @@ return function(ctx)
 
 		return {
 			card = card,
-			getCurrentLang = function() return currentLang end,
-			getLangTexts = function() return langTexts[currentLang] end
+			getCurrentLang = function() return currentLang end
 		}
 	end
 
