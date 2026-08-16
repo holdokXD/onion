@@ -1,156 +1,265 @@
 return function(ctx)
-	local mk, tw, udim2, vec2, rgb = ctx.mk, ctx.tw, ctx.udim2, ctx.vec2, ctx.rgb or rgb
-	local TS = game:GetService("TweenService")
+	local mk = ctx.mk
+	local tw = ctx.tw
+	local udim2 = ctx.udim2
+	local vec2 = ctx.vec2
+	local rgb = rgb or ctx.rgb
+
 	local Module = {}
 
-	local langTexts = {
+	local defaultLangTexts = {
 		EN = {
-			title = "MAIN MENU", subStart = "Select an option to continue", subPass = "Enter password to access",
-			subErr = "Incorrect password, try again", start = "Start", leave = "Leave", langBtn = "English",
-			passHolder = "Enter Password", submit = "Submit", back = "Back", loading = "LOADING MODULES...", complete = "LOAD COMPLETE!"
+			title = "MAIN MENU",
+			subStart = "Select an option to continue",
+			subPass = "Enter password to access",
+			subErr = "Incorrect password, try again",
+			start = "Start",
+			leave = "Leave",
+			langBtn = "English",
+			passHolder = "Enter Password",
+			submit = "Submit",
+			back = "Back",
+			loading = "LOADING MODULES...",
+			complete = "LOAD COMPLETE!"
 		},
 		RU = {
-			title = "ГЛАВНОЕ МЕНЮ", subStart = "Выберите параметр для продолжения", subPass = "Введите пароль для доступа",
-			subErr = "Неверный пароль, попробуйте еще раз", start = "Старт", leave = "Выход", langBtn = "Русский",
-			passHolder = "Введите пароль", submit = "Отправить", back = "Назад", loading = "ЗАГРУЗКА МОДУЛЕЙ...", complete = "ЗАГРУЗКА ЗАВЕРШЕНА!"
+			title = "ГЛАВНОЕ МЕНЮ",
+			subStart = "Выберите параметр для продолжения",
+			subPass = "Введите пароль для доступа",
+			subErr = "Неверный пароль, попробуйте еще раз",
+			start = "Старт",
+			leave = "Выход",
+			langBtn = "Русский",
+			passHolder = "Введите пароль",
+			submit = "Отправить",
+			back = "Назад",
+			loading = "ЗАГРУЗКА МОДУЛЕЙ...",
+			complete = "ЗАГРУЗКА ЗАВЕРШЕНА!"
 		}
 	}
 
-	local function smoothTween(inst, dur, props, style, dir)
-		local info = TweenInfo.new(dur or 0.3, style or Enum.EasingStyle.Sine, dir or Enum.EasingDirection.Out)
-		local t = TS:Create(inst, info, props)
-		t:Play()
-		return t
-	end
-
-	local function createBtn(txt, clr, parent, order)
+	local function createButton(text, color, parent, order)
 		local btn = mk("TextButton", {
-			Size = udim2(0, 220, 0, 44), AnchorPoint = vec2(0.5, 0.5), BackgroundColor3 = clr, BackgroundTransparency = 1,
-			Text = txt, TextColor3 = rgb(255, 255, 255), TextTransparency = 1, TextSize = 15, Font = Enum.Font.GothamBold,
-			AutoButtonColor = false, Modal = true, LayoutOrder = order or 1, ZIndex = 1000005
+			Size = udim2(0, 220, 0, 44),
+			AnchorPoint = vec2(0.5, 0.5),
+			BackgroundColor3 = color,
+			BackgroundTransparency = 1,
+			Text = text,
+			TextColor3 = rgb(255, 255, 255),
+			TextTransparency = 1,
+			TextSize = 15,
+			Font = Enum.Font.GothamBold,
+			AutoButtonColor = false,
+			Modal = true,
+			LayoutOrder = order or 1,
+			ZIndex = 1000005
 		}, parent)
+
 		mk("UICorner", { CornerRadius = UDim.new(0, 10) }, btn)
 		return btn
 	end
 
-	local function bindHover(btn, norm, hover)
+	local function bindHoverEffect(btn, normColor, hoverColor)
 		btn.MouseEnter:Connect(function()
-			if btn.Visible and btn.TextTransparency < 0.2 and not (ctx.isClosing and ctx.isClosing()) then
-				smoothTween(btn, 0.2, { BackgroundColor3 = hover })
+			if btn.Visible and not (ctx.isClosing and ctx.isClosing()) then
+				tw(btn, 0.15, { BackgroundColor3 = hoverColor, Size = udim2(0, 228, 0, 46) })
 			end
 		end)
 		btn.MouseLeave:Connect(function()
 			if btn.Visible and not (ctx.isClosing and ctx.isClosing()) then
-				smoothTween(btn, 0.2, { BackgroundColor3 = norm })
+				tw(btn, 0.15, { BackgroundColor3 = normColor, Size = udim2(0, 220, 0, 44) })
 			end
 		end)
 	end
 
 	function Module.CreateAuthMenu(parent, config)
 		config = config or {}
-		local password = config.password or "1234"
+		local correctPassword = config.password or "1234"
 		local currentLang = config.defaultLang or "EN"
-		local onSuccess, onLeave = config.onSuccess or function() end, config.onLeave or function() game:Shutdown() end
-		local isTransitioning = false
-
+		
+		local langTexts = defaultLangTexts
 		if config.customTexts then
-			for l, map in pairs(config.customTexts) do
-				langTexts[l] = langTexts[l] or {}
-				for k, v in pairs(map) do langTexts[l][k] = v end
+			for l, tMap in pairs(config.customTexts) do
+				if langTexts[l] then
+					for k, v in pairs(tMap) do
+						langTexts[l][k] = v
+					end
+				else
+					langTexts[l] = tMap
+				end
 			end
 		end
 
-		local card = mk("Frame", { Size = udim2(0, 270, 0, 280), AnchorPoint = vec2(0.5, 0.5), Position = udim2(0.5, 0, 0.5, 0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 1000000 }, parent)
+		local onSuccess = config.onSuccess or function() end
+		local onLeave = config.onLeave or function() game:Shutdown() end
 
-		local title = mk("TextLabel", { Size = udim2(1, 0, 0, 30), AnchorPoint = vec2(0.5, 0.5), Position = udim2(0.5, 0, 0, 22), BackgroundTransparency = 1, Text = langTexts[currentLang].title, TextColor3 = rgb(255, 255, 255), TextTransparency = 1, TextSize = 20, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 1000005 }, card)
-		local subTitle = mk("TextLabel", { Size = udim2(1, 0, 0, 20), AnchorPoint = vec2(0.5, 0.5), Position = udim2(0.5, 0, 0, 48), BackgroundTransparency = 1, Text = langTexts[currentLang].subStart, TextColor3 = rgb(140, 140, 155), TextTransparency = 1, TextSize = 12, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 1000005 }, card)
+		local isTransitioning = false
 
-		local mainContainer = mk("Frame", { Size = udim2(1, 0, 0, 200), AnchorPoint = vec2(0.5, 0), Position = udim2(0.5, 0, 0, 72), BackgroundTransparency = 1, ZIndex = 1000005, Visible = true }, card)
-		mk("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10), HorizontalAlignment = Enum.HorizontalAlignment.Center }, mainContainer)
+		local card = mk("Frame", {
+			Size = udim2(0, 270, 0, 280),
+			AnchorPoint = vec2(0.5, 0.5),
+			Position = udim2(0.5, 0, 0.5, 0),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = 1000000
+		}, parent)
 
-		local startBtn = createBtn(langTexts[currentLang].start, rgb(25, 175, 100), mainContainer, 1)
-		local leaveBtn = createBtn(langTexts[currentLang].leave, rgb(215, 35, 55), mainContainer, 2)
-		local langBtn  = createBtn(langTexts[currentLang].langBtn, rgb(60, 60, 75), mainContainer, 3)
+		local title = mk("TextLabel", {
+			Size = udim2(1, 0, 0, 30),
+			AnchorPoint = vec2(0.5, 0.5),
+			Position = udim2(0.5, 0, 0, 22),
+			BackgroundTransparency = 1,
+			Text = langTexts[currentLang].title,
+			TextColor3 = rgb(255, 255, 255),
+			TextTransparency = 1,
+			TextSize = 20,
+			Font = Enum.Font.GothamBold,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			TextYAlignment = Enum.TextYAlignment.Center,
+			ZIndex = 1000005
+		}, card)
 
-		local passContainer = mk("Frame", { Size = udim2(1, 0, 0, 200), AnchorPoint = vec2(0.5, 0), Position = udim2(0.5, 0, 0, 72), BackgroundTransparency = 1, ZIndex = 1000005, Visible = false }, card)
-		mk("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10), HorizontalAlignment = Enum.HorizontalAlignment.Center }, passContainer)
+		local subTitle = mk("TextLabel", {
+			Size = udim2(1, 0, 0, 20),
+			AnchorPoint = vec2(0.5, 0.5),
+			Position = udim2(0.5, 0, 0, 48),
+			BackgroundTransparency = 1,
+			Text = langTexts[currentLang].subStart,
+			TextColor3 = rgb(140, 140, 155),
+			TextTransparency = 1,
+			TextSize = 12,
+			Font = Enum.Font.GothamMedium,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			TextYAlignment = Enum.TextYAlignment.Center,
+			ZIndex = 1000005
+		}, card)
 
-		local passInput = mk("TextBox", { Size = udim2(0, 220, 0, 44), AnchorPoint = vec2(0.5, 0.5), BackgroundColor3 = rgb(20, 20, 25), BackgroundTransparency = 1, Text = "", PlaceholderText = langTexts[currentLang].passHolder, PlaceholderColor3 = rgb(0, 0, 0), TextColor3 = rgb(255, 255, 255), TextTransparency = 1, TextSize = 14, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Center, ClearTextOnFocus = false, LayoutOrder = 1, ZIndex = 1000006 }, passContainer)
+		local mainContainer = mk("Frame", {
+			Size = udim2(1, 0, 0, 200),
+			AnchorPoint = vec2(0.5, 0),
+			Position = udim2(0.5, 0, 0, 72),
+			BackgroundTransparency = 1,
+			ZIndex = 1000005
+		}, card)
+
+		mk("UIListLayout", {
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			Padding = UDim.new(0, 10),
+			HorizontalAlignment = Enum.HorizontalAlignment.Center,
+			VerticalAlignment = Enum.VerticalAlignment.Top
+		}, mainContainer)
+
+		local startBtn = createButton(langTexts[currentLang].start, rgb(25, 175, 100), mainContainer, 1)
+		local leaveBtn = createButton(langTexts[currentLang].leave, rgb(215, 35, 55), mainContainer, 2)
+		local langBtn  = createButton(langTexts[currentLang].langBtn, rgb(60, 60, 75), mainContainer, 3)
+
+		local passContainer = mk("Frame", {
+			Size = udim2(1, 0, 0, 200),
+			AnchorPoint = vec2(0.5, 0),
+			Position = udim2(0.5, 0, 0, 72),
+			BackgroundTransparency = 1,
+			ZIndex = 1000005,
+			Visible = false
+		}, card)
+
+		mk("UIListLayout", {
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			Padding = UDim.new(0, 10),
+			HorizontalAlignment = Enum.HorizontalAlignment.Center,
+			VerticalAlignment = Enum.VerticalAlignment.Top
+		}, passContainer)
+
+		local passInput = mk("TextBox", {
+			Size = udim2(0, 220, 0, 44),
+			AnchorPoint = vec2(0.5, 0.5),
+			BackgroundColor3 = rgb(20, 20, 25),
+			BackgroundTransparency = 1,
+			Text = "",
+			PlaceholderText = langTexts[currentLang].passHolder,
+			PlaceholderColor3 = rgb(0, 0, 0),
+			TextColor3 = rgb(255, 255, 255),
+			TextTransparency = 1,
+			TextSize = 14,
+			Font = Enum.Font.GothamMedium,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			ClearTextOnFocus = false,
+			LayoutOrder = 1,
+			ZIndex = 1000006
+		}, passContainer)
+
 		mk("UICorner", { CornerRadius = UDim.new(0, 10) }, passInput)
 
-		local submitBtn = createBtn(langTexts[currentLang].submit, rgb(25, 175, 100), passContainer, 2)
-		local backBtn   = createBtn(langTexts[currentLang].back, rgb(60, 60, 75), passContainer, 3)
+		local submitBtn = createButton(langTexts[currentLang].submit, rgb(25, 175, 100), passContainer, 2)
+		local backBtn   = createButton(langTexts[currentLang].back, rgb(60, 60, 75), passContainer, 3)
 
-		bindHover(startBtn, rgb(25, 175, 100), rgb(30, 200, 115))
-		bindHover(leaveBtn, rgb(215, 35, 55), rgb(245, 45, 65))
-		bindHover(langBtn, rgb(60, 60, 75), rgb(80, 80, 95))
-		bindHover(submitBtn, rgb(25, 175, 100), rgb(30, 200, 115))
-		bindHover(backBtn, rgb(60, 60, 75), rgb(80, 80, 95))
+		bindHoverEffect(startBtn, rgb(25, 175, 100), rgb(30, 200, 115))
+		bindHoverEffect(leaveBtn, rgb(215, 35, 55), rgb(245, 45, 65))
+		bindHoverEffect(langBtn,  rgb(60, 60, 75), rgb(80, 80, 95))
+		bindHoverEffect(submitBtn, rgb(25, 175, 100), rgb(30, 200, 115))
+		bindHoverEffect(backBtn,   rgb(60, 60, 75), rgb(80, 80, 95))
 
-		smoothTween(title, 0.4, { TextTransparency = 0 })
-		smoothTween(subTitle, 0.4, { TextTransparency = 0 })
-		smoothTween(startBtn, 0.4, { TextTransparency = 0, BackgroundTransparency = 0 })
-		smoothTween(leaveBtn, 0.4, { TextTransparency = 0, BackgroundTransparency = 0 })
-		smoothTween(langBtn, 0.4, { TextTransparency = 0, BackgroundTransparency = 0 })
+		tw(title, 0.4, { TextTransparency = 0 })
+		tw(subTitle, 0.4, { TextTransparency = 0 })
+		tw(startBtn, 0.4, { BackgroundTransparency = 0, TextTransparency = 0 })
+		tw(leaveBtn, 0.4, { BackgroundTransparency = 0, TextTransparency = 0 })
+		tw(langBtn, 0.4, { BackgroundTransparency = 0, TextTransparency = 0 })
 
-		local function changeText(lbl, txt, clr)
-			local tOut = smoothTween(lbl, 0.15, { TextTransparency = 1 })
-			tOut.Completed:Connect(function()
-				lbl.Text = txt
-				if clr then lbl.TextColor3 = clr end
-				smoothTween(lbl, 0.2, { TextTransparency = 0 })
+		local function changeSubTitle(newText, newColor)
+			tw(subTitle, 0.18, { TextTransparency = 1 }).Completed:Connect(function()
+				subTitle.Text = newText
+				subTitle.TextColor3 = newColor or rgb(140, 140, 155)
+				subTitle.Position = udim2(0.5, 0, 0, 48)
+				tw(subTitle, 0.18, { TextTransparency = 0 })
 			end)
+		end
+
+		local function changeTitle(newText)
+			tw(title, 0.18, { TextTransparency = 1 }).Completed:Connect(function()
+				title.Text = newText
+				title.Position = udim2(0.5, 0, 0, 22)
+				tw(title, 0.18, { TextTransparency = 0 })
+			end)
+		end
+
+		local function applyLanguage()
+			local t = langTexts[currentLang]
+			changeTitle(t.title)
+			changeSubTitle(t.subStart)
+
+			startBtn.Text = t.start
+			leaveBtn.Text = t.leave
+			langBtn.Text = t.langBtn
+			passInput.PlaceholderText = t.passHolder
+			submitBtn.Text = t.submit
+			backBtn.Text = t.back
 		end
 
 		langBtn.MouseButton1Click:Connect(function()
 			if isTransitioning then return end
-			isTransitioning = true
 			currentLang = (currentLang == "EN") and "RU" or "EN"
-			local t = langTexts[currentLang]
-
-			smoothTween(startBtn, 0.15, { TextTransparency = 1 })
-			smoothTween(leaveBtn, 0.15, { TextTransparency = 1 })
-			smoothTween(langBtn, 0.15, { TextTransparency = 1 })
-			changeText(title, t.title)
-			changeText(subTitle, t.subStart, rgb(140, 140, 155))
-
-			task.wait(0.16)
-			startBtn.Text, leaveBtn.Text, langBtn.Text = t.start, t.leave, t.langBtn
-			passInput.PlaceholderText, submitBtn.Text, backBtn.Text = t.passHolder, t.submit, t.back
-
-			smoothTween(startBtn, 0.2, { TextTransparency = 0 })
-			smoothTween(leaveBtn, 0.2, { TextTransparency = 0 })
-			smoothTween(langBtn, 0.2, { TextTransparency = 0 })
-			task.wait(0.2)
-			isTransitioning = false
+			applyLanguage()
 		end)
 
 		startBtn.MouseButton1Click:Connect(function()
 			if isTransitioning then return end
 			isTransitioning = true
 
-			smoothTween(startBtn, 0.2, { TextTransparency = 1, BackgroundTransparency = 1 })
-			smoothTween(leaveBtn, 0.2, { TextTransparency = 1, BackgroundTransparency = 1 })
-			smoothTween(langBtn, 0.2, { TextTransparency = 1, BackgroundTransparency = 1 })
-			changeText(subTitle, langTexts[currentLang].subPass, rgb(140, 140, 155))
+			tw(startBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(leaveBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(langBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
-			task.wait(0.2)
+			changeSubTitle(langTexts[currentLang].subPass)
+
+			task.wait(0.25)
+
 			mainContainer.Visible = false
 			passContainer.Visible = true
 
-			passInput.BackgroundTransparency = 1
-			passInput.TextTransparency = 1
-			passInput.PlaceholderColor3 = rgb(0, 0, 0)
-			submitBtn.BackgroundTransparency = 1
-			submitBtn.TextTransparency = 1
-			backBtn.BackgroundTransparency = 1
-			backBtn.TextTransparency = 1
+			tw(passInput, 0.35, { BackgroundTransparency = 0, TextTransparency = 0, PlaceholderColor3 = rgb(120, 120, 135) }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+			tw(submitBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+			tw(backBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-			smoothTween(passInput, 0.25, { BackgroundTransparency = 0, TextTransparency = 0, PlaceholderColor3 = rgb(120, 120, 135) })
-			smoothTween(submitBtn, 0.25, { BackgroundTransparency = 0, TextTransparency = 0 })
-			smoothTween(backBtn, 0.25, { BackgroundTransparency = 0, TextTransparency = 0 })
-
-			task.wait(0.25)
+			task.wait(0.35)
 			isTransitioning = false
 		end)
 
@@ -158,55 +267,55 @@ return function(ctx)
 			if isTransitioning then return end
 			isTransitioning = true
 
-			smoothTween(passInput, 0.2, { BackgroundTransparency = 1, TextTransparency = 1, PlaceholderColor3 = rgb(0, 0, 0) })
-			smoothTween(submitBtn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 })
-			smoothTween(backBtn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 })
-			changeText(subTitle, langTexts[currentLang].subStart, rgb(140, 140, 155))
+			tw(passInput, 0.25, { BackgroundTransparency = 1, TextTransparency = 1, PlaceholderColor3 = rgb(0, 0, 0) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(submitBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+			tw(backBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
-			task.wait(0.2)
+			changeSubTitle(langTexts[currentLang].subStart)
+
+			task.wait(0.25)
+
 			passContainer.Visible = false
 			passInput.Text = ""
 			mainContainer.Visible = true
 
-			startBtn.BackgroundTransparency = 1
-			startBtn.TextTransparency = 1
-			leaveBtn.BackgroundTransparency = 1
-			leaveBtn.TextTransparency = 1
-			langBtn.BackgroundTransparency = 1
-			langBtn.TextTransparency = 1
+			tw(startBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+			tw(leaveBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+			tw(langBtn, 0.35, { BackgroundTransparency = 0, TextTransparency = 0 }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-			smoothTween(startBtn, 0.25, { BackgroundTransparency = 0, TextTransparency = 0 })
-			smoothTween(leaveBtn, 0.25, { BackgroundTransparency = 0, TextTransparency = 0 })
-			smoothTween(langBtn, 0.25, { BackgroundTransparency = 0, TextTransparency = 0 })
-
-			task.wait(0.25)
+			task.wait(0.35)
 			isTransitioning = false
 		end)
 
-		leaveBtn.MouseButton1Click:Connect(onLeave)
+		leaveBtn.MouseButton1Click:Connect(function()
+			if onLeave then onLeave() end
+		end)
 
 		submitBtn.MouseButton1Click:Connect(function()
 			if isTransitioning then return end
-			if passInput.Text == password then
+			if passInput.Text == correctPassword then
 				isTransitioning = true
-				smoothTween(title, 0.2, { TextTransparency = 1 })
-				smoothTween(subTitle, 0.2, { TextTransparency = 1 })
-				smoothTween(passInput, 0.2, { BackgroundTransparency = 1, TextTransparency = 1, PlaceholderColor3 = rgb(0, 0, 0) })
-				smoothTween(submitBtn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 })
-				smoothTween(backBtn, 0.2, { BackgroundTransparency = 1, TextTransparency = 1 })
-				task.wait(0.22)
+				tw(title, 0.25, { TextTransparency = 1 })
+				tw(subTitle, 0.25, { TextTransparency = 1 })
+				tw(passInput, 0.25, { BackgroundTransparency = 1, TextTransparency = 1, PlaceholderColor3 = rgb(0, 0, 0) })
+				tw(submitBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 })
+				tw(backBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 })
+				task.wait(0.25)
 				onSuccess(card, currentLang, langTexts[currentLang])
 			else
-				changeText(subTitle, langTexts[currentLang].subErr, rgb(255, 70, 70))
-				smoothTween(passInput, 0.05, { Position = udim2(0.5, 6, 0, 0) }).Completed:Connect(function()
-					smoothTween(passInput, 0.05, { Position = udim2(0.5, -6, 0, 0) }).Completed:Connect(function()
-						smoothTween(passInput, 0.05, { Position = udim2(0.5, 0, 0, 0) })
+				changeSubTitle(langTexts[currentLang].subErr, rgb(255, 70, 70))
+				tw(passInput, 0.06, { Position = udim2(0, 8, 0, 0) }).Completed:Connect(function()
+					tw(passInput, 0.06, { Position = udim2(0, -8, 0, 0) }).Completed:Connect(function()
+						tw(passInput, 0.06, { Position = udim2(0, 0, 0, 0) })
 					end)
 				end)
 			end
 		end)
 
-		return { card = card, getCurrentLang = function() return currentLang end }
+		return {
+			card = card,
+			getCurrentLang = function() return currentLang end
+		}
 	end
 
 	return Module
