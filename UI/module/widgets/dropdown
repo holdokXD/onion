@@ -1,0 +1,126 @@
+return function(ctx)
+	local mk, tw, udim2, rgb = ctx.mk, ctx.tw, ctx.udim2, ctx.rgb
+	local makeBox = ctx.makeBox
+
+	local function buildDropdownContainer(parent, text, initialText)
+		local open = false
+		local frame, _, setHover = makeBox(parent, udim2(1, -10, 0, 38))
+		frame.ClipsDescendants = true
+
+		local header = mk("TextButton", {Size = udim2(1, 0, 0, 38), BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 2000010}, frame)
+		mk("TextLabel", {Size = udim2(0.4, -10, 1, 0), Position = udim2(0, 8, 0, 0), BackgroundTransparency = 1, Text = text, TextColor3 = rgb(220, 220, 230), TextSize = 12, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2000008}, header)
+		local valLabel = mk("TextLabel", {Size = udim2(0.6, -25, 1, 0), Position = udim2(0.4, 0, 0, 0), BackgroundTransparency = 1, Text = initialText, TextColor3 = rgb(160, 160, 175), TextSize = 11, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 2000008}, header)
+		local arrow = mk("TextLabel", {Size = udim2(0, 20, 1, 0), Position = udim2(1, -22, 0, 0), BackgroundTransparency = 1, Text = "v", TextColor3 = rgb(160, 160, 175), TextSize = 10, Font = Enum.Font.GothamBold, ZIndex = 2000008}, header)
+
+		local dropBody = mk("Frame", {Size = udim2(1, -16, 0, 140), Position = udim2(0, 8, 0, 38), BackgroundTransparency = 1, ZIndex = 2000008}, frame)
+		local searchBox = mk("TextBox", {Size = udim2(1, 0, 0, 24), Position = udim2(0, 0, 0, 0), BackgroundColor3 = rgb(25, 25, 30), BackgroundTransparency = 0.5, Text = "", PlaceholderText = "Search...", TextColor3 = rgb(220, 220, 230), PlaceholderColor3 = rgb(120, 120, 135), TextSize = 13, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false, ZIndex = 2000009}, dropBody)
+		mk("UICorner", {CornerRadius = UDim.new(0, 6)}, searchBox)
+		mk("UIStroke", {Color = rgb(45, 45, 55), Thickness = 1}, searchBox)
+		mk("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8)}, searchBox)
+
+		local scroll = mk("ScrollingFrame", {Size = udim2(1, 0, 1, -30), Position = udim2(0, 0, 0, 30), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 0, CanvasSize = udim2(0, 0, 0, 0), ZIndex = 2000009}, dropBody)
+		local layout = mk("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 3)}, scroll)
+
+		local function updateCanvas()
+			scroll.CanvasSize = udim2(0, 0, 0, layout.AbsoluteContentSize.Y + 2)
+		end
+		layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+
+		header.MouseButton1Click:Connect(function()
+			if ctx.isClosing() then return end
+			open = not open
+			tw(arrow, 0.25, {Rotation = open and 180 or 0})
+			tw(frame, 0.25, {Size = udim2(1, -10, 0, open and 184 or 38)})
+		end)
+
+		header.MouseEnter:Connect(function() setHover(true) end)
+		header.MouseLeave:Connect(function() setHover(false) end)
+
+		return frame, header, valLabel, searchBox, scroll, function(query, btns)
+			query = string.lower(query)
+			for opt, btn in pairs(btns) do
+				btn.Visible = (query == "" or string.find(string.lower(opt), query, 1, true) ~= nil)
+			end
+			updateCanvas()
+		end
+	end
+
+	return {
+		AddDropdown = function(parent, text, options, defaultOption, callback)
+			local selected = defaultOption or options[1] or ""
+			local _, _, valLabel, searchBox, scroll, filterOptions = buildDropdownContainer(parent, text, tostring(selected))
+			local btns = {}
+
+			local function updateBtnStyle(opt, btn)
+				local isSel = (opt == selected)
+				btn.BackgroundTransparency = 1
+				tw(btn, 0.12, {TextColor3 = isSel and rgb(255, 255, 255) or rgb(140, 140, 155)})
+			end
+
+			for i, opt in ipairs(options) do
+				local btn = mk("TextButton", {Size = udim2(1, 0, 0, 24), Text = "  " .. tostring(opt), TextSize = 11, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, AutoButtonColor = false, LayoutOrder = i, ZIndex = 2000009}, scroll)
+				mk("UICorner", {CornerRadius = UDim.new(0, 6)}, btn)
+				btns[opt] = btn
+				updateBtnStyle(opt, btn)
+
+				btn.MouseButton1Click:Connect(function()
+					if ctx.isClosing() then return end
+					selected = opt
+					valLabel.Text = tostring(selected)
+					for o, b in pairs(btns) do updateBtnStyle(o, b) end
+					if callback then callback(selected) end
+				end)
+			end
+
+			searchBox:GetPropertyChangedSignal("Text"):Connect(function() filterOptions(searchBox.Text, btns) end)
+		end,
+
+		AddMultiDropdown = function(parent, text, options, defaultSelected, callback)
+			local selectedMap = {}
+			if type(defaultSelected) == "table" then
+				for _, v in ipairs(defaultSelected) do selectedMap[v] = true end
+			end
+
+			local _, _, valLabel, searchBox, scroll, filterOptions = buildDropdownContainer(parent, text, "")
+			local btns = {}
+
+			local function getSelectedList()
+				local list = {}
+				for _, opt in ipairs(options) do
+					if selectedMap[opt] then table.insert(list, opt) end
+				end
+				return list
+			end
+
+			local function updateText()
+				local list = getSelectedList()
+				valLabel.Text = #list > 0 and table.concat(list, ", ") or "None"
+			end
+
+			local function updateBtnStyle(opt, btn)
+				local active = selectedMap[opt] or false
+				btn.BackgroundTransparency = 1
+				btn.Text = "  " .. tostring(opt)
+				tw(btn, 0.12, {TextColor3 = active and rgb(255, 255, 255) or rgb(140, 140, 155)})
+			end
+
+			for i, opt in ipairs(options) do
+				local btn = mk("TextButton", {Size = udim2(1, 0, 0, 24), TextSize = 11, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, AutoButtonColor = false, LayoutOrder = i, ZIndex = 2000009}, scroll)
+				mk("UICorner", {CornerRadius = UDim.new(0, 6)}, btn)
+				btns[opt] = btn
+				updateBtnStyle(opt, btn)
+
+				btn.MouseButton1Click:Connect(function()
+					if ctx.isClosing() then return end
+					selectedMap[opt] = not selectedMap[opt]
+					updateBtnStyle(opt, btn)
+					updateText()
+					if callback then callback(getSelectedList()) end
+				end)
+			end
+
+			updateText()
+			searchBox:GetPropertyChangedSignal("Text"):Connect(function() filterOptions(searchBox.Text, btns) end)
+		end
+	}
+end
