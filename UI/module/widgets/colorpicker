@@ -1,61 +1,134 @@
 return function(ctx)
-	local mk, tw, udim2, vec2, rgb, makeBox, getText = ctx.mk, ctx.tw, ctx.udim2, ctx.vec2, ctx.rgb, ctx.makeBox, ctx.getText
+	local mk, tw, udim2, vec2, rgb = ctx.mk, ctx.tw, ctx.udim2, ctx.vec2, ctx.rgb
+	local makeBox, UIS = ctx.makeBox, ctx.UIS
+	local clamp, floor = math.clamp, math.floor
 
-	local Module = {}
+	return {
+		AddColorPicker = function(parent, text, defaultColor, callback)
+			local open = false
+			local color = defaultColor or rgb(255, 0, 0)
+			local h, s, v = color:ToHSV()
 
-	local function parseColorConfig(arg1, arg2, arg3)
-		if type(arg1) == "table" and (arg1.ru or arg1.en or arg1.Text) then
-			return {
-				Text = getText(arg1.Text or arg1, ctx.currentLang),
-				Default = arg1.Default or rgb(255, 255, 255),
-				Callback = arg1.Callback or function() end
-			}
-		else
-			return {
-				Text = getText(arg1, ctx.currentLang),
-				Default = arg2 or rgb(255, 255, 255),
-				Callback = type(arg3) == "function" and arg3 or function() end
-			}
+			local frame, _, setHover = makeBox(parent, udim2(1, -10, 0, 38))
+			frame.ClipsDescendants = true
+
+			local header = mk("TextButton", {Size = udim2(1, 0, 0, 38), BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 2000010}, frame)
+			mk("TextLabel", {Size = udim2(0.5, -10, 1, 0), Position = udim2(0, 8, 0, 0), BackgroundTransparency = 1, Text = text, TextColor3 = rgb(220, 220, 230), TextSize = 12, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2000008}, header)
+
+			local preview = mk("Frame", {Size = udim2(0, 24, 0, 14), Position = udim2(1, -50, 0.5, 0), AnchorPoint = vec2(0, 0.5), BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = 2000008}, header)
+			mk("UICorner", {CornerRadius = UDim.new(0, 4)}, preview)
+			mk("UIStroke", {Color = rgb(55, 55, 65), Thickness = 1}, preview)
+
+			local arrow = mk("TextLabel", {Size = udim2(0, 20, 1, 0), Position = udim2(1, -22, 0, 0), BackgroundTransparency = 1, Text = "v", TextColor3 = rgb(160, 160, 175), TextSize = 10, Font = Enum.Font.GothamBold, ZIndex = 2000008}, header)
+			local body = mk("Frame", {Size = udim2(1, -16, 0, 100), Position = udim2(0, 8, 0, 38), BackgroundTransparency = 1, Visible = false, ZIndex = 2000008}, frame)
+
+			local hueTrack = mk("Frame", {Size = udim2(1, 0, 0, 12), Position = udim2(0, 0, 0, 4), BackgroundColor3 = rgb(255, 255, 255), BorderSizePixel = 0, ZIndex = 2000009}, body)
+			mk("UICorner", {CornerRadius = UDim.new(0, 4)}, hueTrack)
+			mk("UIGradient", {
+				Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, rgb(255, 0, 0)), ColorSequenceKeypoint.new(0.166, rgb(255, 255, 0)),
+					ColorSequenceKeypoint.new(0.333, rgb(0, 255, 0)), ColorSequenceKeypoint.new(0.5, rgb(0, 255, 255)),
+					ColorSequenceKeypoint.new(0.666, rgb(0, 0, 255)), ColorSequenceKeypoint.new(0.833, rgb(255, 0, 255)),
+					ColorSequenceKeypoint.new(1, rgb(255, 0, 0))
+				})
+			}, hueTrack)
+			local hueBtn = mk("TextButton", {Size = udim2(1, 0, 1, 0), BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 2000011}, hueTrack)
+			local huePicker = mk("Frame", {Size = udim2(0, 6, 1, 4), AnchorPoint = vec2(0.5, 0.5), Position = udim2(h, 0, 0.5, 0), BackgroundColor3 = rgb(255, 255, 255), BorderSizePixel = 0, ZIndex = 2000010}, hueTrack)
+			mk("UICorner", {CornerRadius = UDim.new(0, 3)}, huePicker)
+			mk("UIStroke", {Color = rgb(0, 0, 0), Thickness = 1}, huePicker)
+
+			local satTrack = mk("Frame", {Size = udim2(1, 0, 0, 12), Position = udim2(0, 0, 0, 24), BackgroundColor3 = rgb(255, 255, 255), BorderSizePixel = 0, ZIndex = 2000009}, body)
+			mk("UICorner", {CornerRadius = UDim.new(0, 4)}, satTrack)
+			local satGradient = mk("UIGradient", {Color = ColorSequence.new(Color3.fromHSV(h, 0, v), Color3.fromHSV(h, 1, v))}, satTrack)
+			local satBtn = mk("TextButton", {Size = udim2(1, 0, 1, 0), BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 2000011}, satTrack)
+			local satPicker = mk("Frame", {Size = udim2(0, 6, 1, 4), AnchorPoint = vec2(0.5, 0.5), Position = udim2(s, 0, 0.5, 0), BackgroundColor3 = rgb(255, 255, 255), BorderSizePixel = 0, ZIndex = 2000010}, satTrack)
+			mk("UICorner", {CornerRadius = UDim.new(0, 3)}, satPicker)
+			mk("UIStroke", {Color = rgb(0, 0, 0), Thickness = 1}, satPicker)
+
+			local valTrack = mk("Frame", {Size = udim2(1, 0, 0, 12), Position = udim2(0, 0, 0, 44), BackgroundColor3 = rgb(255, 255, 255), BorderSizePixel = 0, ZIndex = 2000009}, body)
+			mk("UICorner", {CornerRadius = UDim.new(0, 4)}, valTrack)
+			local valGradient = mk("UIGradient", {Color = ColorSequence.new(Color3.fromHSV(h, s, 0), Color3.fromHSV(h, s, 1))}, valTrack)
+			local valBtn = mk("TextButton", {Size = udim2(1, 0, 1, 0), BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 2000011}, valTrack)
+			local valPicker = mk("Frame", {Size = udim2(0, 6, 1, 4), AnchorPoint = vec2(0.5, 0.5), Position = udim2(v, 0, 0.5, 0), BackgroundColor3 = rgb(255, 255, 255), BorderSizePixel = 0, ZIndex = 2000010}, valTrack)
+			mk("UICorner", {CornerRadius = UDim.new(0, 3)}, valPicker)
+			mk("UIStroke", {Color = rgb(0, 0, 0), Thickness = 1}, valPicker)
+
+			local rgbRow = mk("Frame", {Size = udim2(1, 0, 0, 24), Position = udim2(0, 0, 0, 64), BackgroundTransparency = 1, ZIndex = 2000009}, body)
+
+			local function makeRGBBox(pos, labelText, defaultVal)
+				local container = mk("Frame", {Size = udim2(0.31, 0, 1, 0), Position = pos, BackgroundColor3 = rgb(25, 25, 30), BackgroundTransparency = 0.5, ZIndex = 2000009}, rgbRow)
+				mk("UICorner", {CornerRadius = UDim.new(0, 6)}, container)
+				mk("UIStroke", {Color = rgb(45, 45, 55), Thickness = 1}, container)
+				mk("TextLabel", {Size = udim2(0, 14, 1, 0), Position = udim2(0, 6, 0, 0), BackgroundTransparency = 1, Text = labelText, TextColor3 = rgb(140, 140, 155), TextSize = 11, Font = Enum.Font.GothamBold, ZIndex = 2000010}, container)
+				return mk("TextBox", {Size = udim2(1, -22, 1, 0), Position = udim2(0, 20, 0, 0), BackgroundTransparency = 1, Text = tostring(defaultVal), TextColor3 = rgb(220, 220, 230), TextSize = 11, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Center, ClearTextOnFocus = false, ZIndex = 2000010}, container)
+			end
+
+			local rInput = makeRGBBox(udim2(0, 0, 0, 0), "R", floor(color.R * 255))
+			local gInput = makeRGBBox(udim2(0.345, 0, 0, 0), "G", floor(color.G * 255))
+			local bInput = makeRGBBox(udim2(0.69, 0, 0, 0), "B", floor(color.B * 255))
+
+			local function updateColor()
+				color = Color3.fromHSV(h, s, v)
+				preview.BackgroundColor3 = color
+				satGradient.Color = ColorSequence.new(Color3.fromHSV(h, 0, v), Color3.fromHSV(h, 1, v))
+				valGradient.Color = ColorSequence.new(Color3.fromHSV(h, s, 0), Color3.fromHSV(h, s, 1))
+				rInput.Text = tostring(floor(color.R * 255))
+				gInput.Text = tostring(floor(color.G * 255))
+				bInput.Text = tostring(floor(color.B * 255))
+				if callback then callback(color) end
+			end
+
+			local function attachSliderLogic(trackFrame, btnObj, pickerObj, setValueCallback)
+				local myInput = nil
+				local function proc(inp)
+					local percent = clamp((inp.Position.X - trackFrame.AbsolutePosition.X) / trackFrame.AbsoluteSize.X, 0, 1)
+					tw(pickerObj, 0.05, {Position = udim2(percent, 0, 0.5, 0)})
+					setValueCallback(percent)
+					updateColor()
+				end
+
+				btnObj.InputBegan:Connect(function(inp)
+					if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) and not ctx.getActiveSliderInput() then
+						ctx.setActiveSliderInput(inp)
+						myInput = inp
+						proc(inp)
+					end
+				end)
+
+				UIS.InputChanged:Connect(function(inp) if myInput and inp == myInput then proc(inp) end end)
+				UIS.InputEnded:Connect(function(inp) if myInput and inp == myInput then ctx.setActiveSliderInput(nil) myInput = nil end end)
+			end
+
+			attachSliderLogic(hueTrack, hueBtn, huePicker, function(rel) h = rel end)
+			attachSliderLogic(satTrack, satBtn, satPicker, function(rel) s = rel end)
+			attachSliderLogic(valTrack, valBtn, valPicker, function(rel) v = rel end)
+
+			local function onRGBFocusLost()
+				local rVal, gVal, bVal = tonumber(rInput.Text) or floor(color.R * 255), tonumber(gInput.Text) or floor(color.G * 255), tonumber(bInput.Text) or floor(color.B * 255)
+				local newCol = rgb(clamp(rVal, 0, 255), clamp(gVal, 0, 255), clamp(bVal, 0, 255))
+				h, s, v = newCol:ToHSV()
+				tw(huePicker, 0.1, {Position = udim2(h, 0, 0.5, 0)})
+				tw(satPicker, 0.1, {Position = udim2(s, 0, 0.5, 0)})
+				tw(valPicker, 0.1, {Position = udim2(v, 0, 0.5, 0)})
+				updateColor()
+			end
+
+			rInput.FocusLost:Connect(onRGBFocusLost)
+			gInput.FocusLost:Connect(onRGBFocusLost)
+			bInput.FocusLost:Connect(onRGBFocusLost)
+
+			header.MouseButton1Click:Connect(function()
+				if ctx.isClosing() then return end
+				open = not open
+				if open then body.Visible = true end
+				tw(arrow, 0.25, {Rotation = open and 180 or 0})
+				tw(frame, 0.25, {Size = udim2(1, -10, 0, open and 132 or 38)}).Completed:Connect(function()
+					if not open then body.Visible = false end
+				end)
+			end)
+
+			header.MouseEnter:Connect(function() setHover(true) end)
+			header.MouseLeave:Connect(function() setHover(false) end)
 		end
-	end
-
-	function Module.AddColorPicker(parent, config1, defColor, cb)
-		local cfg = parseColorConfig(config1, defColor, cb)
-		local currentColor = cfg.Default
-
-		local box, stroke, hoverFn = makeBox(parent, udim2(1, -10, 0, 38))
-
-		local label = mk("TextLabel", {
-			Size = udim2(1, -60, 1, 0),
-			Position = udim2(0, 12, 0, 0),
-			BackgroundTransparency = 1,
-			Text = cfg.Text,
-			TextColor3 = rgb(220, 220, 235),
-			TextSize = 13,
-			Font = Enum.Font.GothamMedium,
-			TextXAlignment = Enum.TextXAlignment.Left,
-			ZIndex = 2000008
-		}, box)
-
-		local preview = mk("Frame", {
-			Size = udim2(0, 24, 0, 24),
-			AnchorPoint = vec2(1, 0.5),
-			Position = udim2(1, -10, 0.5, 0),
-			BackgroundColor3 = currentColor,
-			ZIndex = 2000008
-		}, box)
-		mk("UICorner", { CornerRadius = UDim.new(0, 6) }, preview)
-		mk("UIStroke", { Color = rgb(60, 60, 75), Thickness = 1 }, preview)
-
-		local btn = mk("TextButton", { Size = udim2(1, 0, 1, 0), BackgroundTransparency = 1, Text = "", ZIndex = 2000010 }, box)
-		btn.MouseButton1Click:Connect(function()
-			currentColor = (currentColor == cfg.Default) and rgb(255, 80, 80) or cfg.Default
-			tw(preview, 0.2, { BackgroundColor3 = currentColor })
-			cfg.Callback(currentColor)
-		end)
-
-		return box
-	end
-
-	return Module
+	}
 end
