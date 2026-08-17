@@ -117,13 +117,31 @@ return function(ctx)
 		AddDualSlider = function(parent, text1, min1, max1, def1, cb1, text2, min2, max2, def2, cb2)
 			local rowFrame = mk("Frame", {Size = udim2(1, -10, 0, 48), BackgroundTransparency = 1, ZIndex = 2000007}, parent)
 
+			local t1Data, mn1, mx1, df1, c1 = text1, min1, max1, def1, cb1
+			if type(text1) == "table" and (text1.ru or text1.en or text1.Min ~= nil) then
+				t1Data = text1
+				mn1 = text1.Min or min1 or 0
+				mx1 = text1.Max or max1 or 100
+				df1 = text1.Default or def1 or mn1
+				c1 = text1.Callback or cb1
+			end
+
+			local t2Data, mn2, mx2, df2, c2 = text2, min2, max2, def2, cb2
+			if type(text2) == "table" and (text2.ru or text2.en or text2.Min ~= nil) then
+				t2Data = text2
+				mn2 = text2.Min or min2 or 0
+				mx2 = text2.Max or max2 or 100
+				df2 = text2.Default or def2 or mn2
+				c2 = text2.Callback or cb2
+			end
+
 			local f1, _, h1 = makeBox(rowFrame, udim2(0.5, -4, 1, 0), udim2(0, 0, 0, 0), vec2(0, 0))
-			createSliderCore(f1, text1, min1, max1, def1, cb1, -45, 35)
+			createSliderCore(f1, t1Data, mn1, mx1, df1, c1, -45, 35)
 			f1.MouseEnter:Connect(function() h1(true) end)
 			f1.MouseLeave:Connect(function() h1(false) end)
 
 			local f2, _, h2 = makeBox(rowFrame, udim2(0.5, -4, 1, 0), udim2(1, 0, 0, 0), vec2(1, 0))
-			createSliderCore(f2, text2, min2, max2, def2, cb2, -45, 35)
+			createSliderCore(f2, t2Data, mn2, mx2, df2, c2, -45, 35)
 			f2.MouseEnter:Connect(function() h2(true) end)
 			f2.MouseLeave:Connect(function() h2(false) end)
 		end
