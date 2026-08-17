@@ -1,86 +1,80 @@
 return function(ctx)
-	local mk, tw, udim2, vec2, rgb, makeBox, getText = ctx.mk, ctx.tw, ctx.udim2, ctx.vec2, ctx.rgb, ctx.makeBox, ctx.getText
+	local mk, tw, udim2, vec2, rgb = ctx.mk, ctx.tw, ctx.udim2, ctx.vec2, ctx.rgb
+	local makeBox = ctx.makeBox
 
-	local Module = {}
+	local function createToggleCore(parentFrame, text, textWidthOffset, swSize, swPos, knobSize, knobPosOn, knobPosOff, defaultState, callback)
+		local state = defaultState or false
 
-	local function parseToggleConfig(arg1, arg2, arg3)
-		if type(arg1) == "table" and (arg1.ru or arg1.en or arg1.Text) then
-			return {
-				Text = getText(arg1.Text or arg1, ctx.currentLang),
-				Default = arg1.Default or false,
-				Callback = arg1.Callback or function() end
-			}
-		else
-			return {
-				Text = getText(arg1, ctx.currentLang),
-				Default = arg2 or false,
-				Callback = type(arg3) == "function" and arg3 or function() end
-			}
-		end
-	end
-
-	function Module.AddToggle(parent, config1, def, cb)
-		local cfg = parseToggleConfig(config1, def, cb)
-		local enabled = cfg.Default
-
-		local box, stroke, hoverFn = makeBox(parent, udim2(1, -10, 0, 36))
-
-		local label = mk("TextLabel", {
-			Size = udim2(1, -50, 1, 0),
-			Position = udim2(0, 12, 0, 0),
+		mk("TextLabel", {
+			Size = udim2(1, textWidthOffset, 1, 0),
+			Position = udim2(0, 8, 0, 0),
 			BackgroundTransparency = 1,
-			Text = cfg.Text,
-			TextColor3 = rgb(220, 220, 235),
-			TextSize = 13,
+			Text = text,
+			TextColor3 = rgb(220, 220, 230),
+			TextSize = 12,
 			Font = Enum.Font.GothamMedium,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 2000008
-		}, box)
+		}, parentFrame)
 
-		local switchBg = mk("Frame", {
-			Size = udim2(0, 36, 0, 20),
+		local overlay = mk("TextButton", {
+			Size = udim2(1, 0, 1, 0),
+			BackgroundTransparency = 1,
+			Text = "",
+			AutoButtonColor = false,
+			ZIndex = 2000010
+		}, parentFrame)
+
+		local swBg = mk("Frame", {
+			Size = swSize,
 			AnchorPoint = vec2(1, 0.5),
-			Position = udim2(1, -10, 0.5, 0),
-			BackgroundColor3 = enabled and rgb(30, 215, 120) or rgb(40, 40, 50),
+			Position = swPos,
+			BackgroundColor3 = state and rgb(25, 175, 100) or rgb(45, 45, 55),
 			ZIndex = 2000008
-		}, box)
-		mk("UICorner", {CornerRadius = UDim.new(1, 0)}, switchBg)
+		}, parentFrame)
+		mk("UICorner", {CornerRadius = UDim.new(1, 0)}, swBg)
 
-		local dot = mk("Frame", {
-			Size = udim2(0, 14, 0, 14),
+		local knob = mk("Frame", {
+			Size = knobSize,
 			AnchorPoint = vec2(0, 0.5),
-			Position = enabled and udim2(1, -17, 0.5, 0) or udim2(0, 3, 0.5, 0),
+			Position = state and knobPosOn or knobPosOff,
 			BackgroundColor3 = rgb(255, 255, 255),
+			BorderSizePixel = 0,
 			ZIndex = 2000009
-		}, switchBg)
-		mk("UICorner", {CornerRadius = UDim.new(1, 0)}, dot)
+		}, swBg)
+		mk("UICorner", {CornerRadius = UDim.new(1, 0)}, knob)
 
-		local btn = mk("TextButton", { Size = udim2(1, 0, 1, 0), BackgroundTransparency = 1, Text = "", ZIndex = 2000010 }, box)
+		overlay.MouseButton1Click:Connect(function()
+			if ctx.isClosing() then return end
+			state = not state
+			tw(swBg, 0.15, {BackgroundColor3 = state and rgb(25, 175, 100) or rgb(45, 45, 55)})
+			tw(knob, 0.15, {Position = state and knobPosOn or knobPosOff})
+			if callback then callback(state) end
+		end)
 
-		local function updateToggle(val)
-			enabled = val
-			tw(switchBg, 0.2, { BackgroundColor3 = enabled and rgb(30, 215, 120) or rgb(40, 40, 50) })
-			tw(dot, 0.2, { Position = enabled and udim2(1, -17, 0.5, 0) or udim2(0, 3, 0.5, 0) })
-			cfg.Callback(enabled)
+		return overlay
+	end
+
+	return {
+		AddToggle = function(parent, text, defaultState, callback)
+			local frame, _, setHover = makeBox(parent, udim2(1, -10, 0, 36))
+			local overlay = createToggleCore(frame, text, -50, udim2(0, 36, 0, 20), udim2(1, -8, 0.5, 0), udim2(0, 16, 0, 16), udim2(1, -18, 0.5, 0), udim2(0, 2, 0.5, 0), defaultState, callback)
+			overlay.MouseEnter:Connect(function() setHover(true) end)
+			overlay.MouseLeave:Connect(function() setHover(false) end)
+		end,
+
+		AddDualToggle = function(parent, text1, default1, callback1, text2, default2, callback2)
+			local rowFrame = mk("Frame", {Size = udim2(1, -10, 0, 36), BackgroundTransparency = 1, ZIndex = 2000007}, parent)
+
+			local f1, _, h1 = makeBox(rowFrame, udim2(0.5, -4, 1, 0), udim2(0, 0, 0, 0), vec2(0, 0))
+			local o1 = createToggleCore(f1, text1, -46, udim2(0, 30, 0, 16), udim2(1, -6, 0.5, 0), udim2(0, 12, 0, 12), udim2(1, -14, 0.5, 0), udim2(0, 2, 0.5, 0), default1, callback1)
+			o1.MouseEnter:Connect(function() h1(true) end)
+			o1.MouseLeave:Connect(function() h1(false) end)
+
+			local f2, _, h2 = makeBox(rowFrame, udim2(0.5, -4, 1, 0), udim2(1, 0, 0, 0), vec2(1, 0))
+			local o2 = createToggleCore(f2, text2, -46, udim2(0, 30, 0, 16), udim2(1, -6, 0.5, 0), udim2(0, 12, 0, 12), udim2(1, -14, 0.5, 0), udim2(0, 2, 0.5, 0), default2, callback2)
+			o2.MouseEnter:Connect(function() h2(true) end)
+			o2.MouseLeave:Connect(function() h2(false) end)
 		end
-
-		btn.MouseEnter:Connect(function() hoverFn(true) end)
-		btn.MouseLeave:Connect(function() hoverFn(false) end)
-		btn.MouseButton1Click:Connect(function() updateToggle(not enabled) end)
-
-		return box
-	end
-
-	function Module.AddDualToggle(parent, config1, def1, cb1, config2, def2, cb2)
-		local cfgA = parseToggleConfig(config1, def1, cb1)
-		local cfgB = parseToggleConfig(config2, def2, cb2)
-
-		local container = mk("Frame", { Size = udim2(1, -10, 0, 36), BackgroundTransparency = 1, ZIndex = 2000007 }, parent)
-		Module.AddToggle(container, cfgA)
-		Module.AddToggle(container, cfgB)
-
-		return container
-	end
-
-	return Module
+	}
 end
