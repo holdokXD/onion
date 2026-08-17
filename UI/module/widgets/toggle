@@ -1,15 +1,16 @@
 return function(ctx)
 	local mk, tw, udim2, vec2, rgb = ctx.mk, ctx.tw, ctx.udim2, ctx.vec2, ctx.rgb
-	local makeBox = ctx.makeBox
+	local makeBox, getText = ctx.makeBox, ctx.getText
 
-	local function createToggleCore(parentFrame, text, textWidthOffset, swSize, swPos, knobSize, knobPosOn, knobPosOff, defaultState, callback)
+	local function createToggleCore(parentFrame, textData, textWidthOffset, swSize, swPos, knobSize, knobPosOn, knobPosOff, defaultState, callback)
 		local state = defaultState or false
+		local title = getText(textData, ctx.currentLang)
 
 		mk("TextLabel", {
 			Size = udim2(1, textWidthOffset, 1, 0),
 			Position = udim2(0, 8, 0, 0),
 			BackgroundTransparency = 1,
-			Text = text,
+			Text = title,
 			TextColor3 = rgb(220, 220, 230),
 			TextSize = 12,
 			Font = Enum.Font.GothamMedium,
@@ -56,9 +57,19 @@ return function(ctx)
 	end
 
 	return {
-		AddToggle = function(parent, text, defaultState, callback)
+		AddToggle = function(parent, config, defaultState, callback)
+			local textData = config
+			local defState = defaultState
+			local cb = callback
+
+			if type(config) == "table" and (config.ru or config.en or config.Text or config.Default ~= nil) then
+				textData = config
+				defState = config.Default ~= nil and config.Default or (type(defaultState) == "boolean" and defaultState or false)
+				cb = config.Callback or callback or (type(defaultState) == "function" and defaultState or nil)
+			end
+
 			local frame, _, setHover = makeBox(parent, udim2(1, -10, 0, 36))
-			local overlay = createToggleCore(frame, text, -50, udim2(0, 36, 0, 20), udim2(1, -8, 0.5, 0), udim2(0, 16, 0, 16), udim2(1, -18, 0.5, 0), udim2(0, 2, 0.5, 0), defaultState, callback)
+			local overlay = createToggleCore(frame, textData, -50, udim2(0, 36, 0, 20), udim2(1, -8, 0.5, 0), udim2(0, 16, 0, 16), udim2(1, -18, 0.5, 0), udim2(0, 2, 0.5, 0), defState, cb)
 			overlay.MouseEnter:Connect(function() setHover(true) end)
 			overlay.MouseLeave:Connect(function() setHover(false) end)
 		end,
