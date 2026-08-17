@@ -1,19 +1,30 @@
 return function(ctx)
 	local mk, tw, udim2, vec2, rgb = ctx.mk, ctx.tw, ctx.udim2, ctx.vec2, ctx.rgb
-	local makeBox, UIS = ctx.makeBox, ctx.UIS
+	local makeBox, UIS, getText = ctx.makeBox, ctx.UIS, ctx.getText
 	local clamp, floor = math.clamp, math.floor
 
 	return {
-		AddColorPicker = function(parent, text, defaultColor, callback)
+		AddColorPicker = function(parent, config, defaultColor, callback)
+			local textData = config
+			local defCol = defaultColor
+			local cb = callback
+
+			if type(config) == "table" and (config.ru or config.en or config.Text or config.Default) then
+				textData = config
+				defCol = config.Default or defaultColor or rgb(255, 0, 0)
+				cb = config.Callback or callback or (type(defaultColor) == "function" and defaultColor or nil)
+			end
+
 			local open = false
-			local color = defaultColor or rgb(255, 0, 0)
+			local color = defCol or rgb(255, 0, 0)
 			local h, s, v = color:ToHSV()
+			local title = getText(textData, ctx.currentLang)
 
 			local frame, _, setHover = makeBox(parent, udim2(1, -10, 0, 38))
 			frame.ClipsDescendants = true
 
 			local header = mk("TextButton", {Size = udim2(1, 0, 0, 38), BackgroundTransparency = 1, Text = "", AutoButtonColor = false, ZIndex = 2000010}, frame)
-			mk("TextLabel", {Size = udim2(0.5, -10, 1, 0), Position = udim2(0, 8, 0, 0), BackgroundTransparency = 1, Text = text, TextColor3 = rgb(220, 220, 230), TextSize = 12, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2000008}, header)
+			mk("TextLabel", {Size = udim2(0.5, -10, 1, 0), Position = udim2(0, 8, 0, 0), BackgroundTransparency = 1, Text = title, TextColor3 = rgb(220, 220, 230), TextSize = 12, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2000008}, header)
 
 			local preview = mk("Frame", {Size = udim2(0, 24, 0, 14), Position = udim2(1, -50, 0.5, 0), AnchorPoint = vec2(0, 0.5), BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = 2000008}, header)
 			mk("UICorner", {CornerRadius = UDim.new(0, 4)}, preview)
@@ -75,7 +86,7 @@ return function(ctx)
 				rInput.Text = tostring(floor(color.R * 255))
 				gInput.Text = tostring(floor(color.G * 255))
 				bInput.Text = tostring(floor(color.B * 255))
-				if callback then callback(color) end
+				if cb then cb(color) end
 			end
 
 			local function attachSliderLogic(trackFrame, btnObj, pickerObj, setValueCallback)
