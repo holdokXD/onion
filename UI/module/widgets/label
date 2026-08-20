@@ -1,0 +1,40 @@
+return function(ctx)
+	local mk, udim2, rgb, getText = ctx.mk, ctx.udim2, ctx.rgb, ctx.getText
+	
+	return {
+		AddLabel = function(parent, textData)
+			local container = mk("Frame", {
+				Size = udim2(1, -10, 0, 0),
+				AutomaticSize = Enum.AutomaticSize.Y,
+				BackgroundColor3 = rgb(18, 18, 22),
+				BackgroundTransparency = 0.3,
+				ZIndex = 2000007
+			}, parent)
+			mk("UICorner", {CornerRadius = UDim.new(0, 8)}, container)
+			mk("UIStroke", {Color = rgb(35, 35, 45), Thickness = 1}, container)
+			
+			mk("UIPadding", {
+				PaddingTop = UDim.new(0, 8),
+				PaddingBottom = UDim.new(0, 8),
+				PaddingLeft = UDim.new(0, 12),
+				PaddingRight = UDim.new(0, 12)
+			}, container)
+
+			local label = mk("TextLabel", {
+				Size = udim2(1, 0, 0, 0),
+				AutomaticSize = Enum.AutomaticSize.Y,
+				BackgroundTransparency = 1,
+				Text = getText(textData, ctx.currentLang),
+				TextColor3 = rgb(200, 200, 215),
+				TextSize = 12,
+				Font = Enum.Font.GothamMedium,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextYAlignment = Enum.TextYAlignment.Top,
+				TextWrapped = true,
+				ZIndex = 2000008
+			}, container)
+
+			return label
+		end
+	}
+end
