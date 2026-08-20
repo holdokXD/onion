@@ -1,0 +1,60 @@
+return function(ctx)
+	local makeBox, mk, tw, udim2, vec2, rgb, getText = ctx.makeBox, ctx.mk, ctx.tw, ctx.udim2, ctx.vec2, ctx.rgb, ctx.getText
+	
+	return {
+		AddInput = function(parent, titleText, placeholderText, defaultVal, callback)
+			local box, stroke, updateHover = makeBox(parent, udim2(1, -10, 0, 38))
+			
+			mk("TextLabel", {
+				Size = udim2(0.45, -12, 1, 0),
+				Position = udim2(0, 12, 0, 0),
+				BackgroundTransparency = 1,
+				Text = getText(titleText, ctx.currentLang),
+				TextColor3 = rgb(240, 240, 245),
+				TextSize = 13,
+				Font = Enum.Font.GothamMedium,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				ZIndex = 2000008
+			}, box)
+
+			local inputContainer = mk("Frame", {
+				Size = udim2(0.5, 0, 0, 26),
+				Position = udim2(1, -8, 0.5, 0),
+				AnchorPoint = vec2(1, 0.5),
+				BackgroundColor3 = rgb(25, 25, 32),
+				ZIndex = 2000008
+			}, box)
+			mk("UICorner", {CornerRadius = UDim.new(0, 6)}, inputContainer)
+			local inputStroke = mk("UIStroke", {Color = rgb(45, 45, 58), Thickness = 1}, inputContainer)
+
+			local textBox = mk("TextBox", {
+				Size = udim2(1, -12, 1, 0),
+				Position = udim2(0, 6, 0, 0),
+				BackgroundTransparency = 1,
+				Text = defaultVal or "",
+				PlaceholderText = getText(placeholderText or "...", ctx.currentLang),
+				PlaceholderColor3 = rgb(110, 110, 125),
+				TextColor3 = rgb(240, 240, 245),
+				TextSize = 12,
+				Font = Enum.Font.Gotham,
+				ClearTextOnFocus = false,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				ZIndex = 2000009
+			}, inputContainer)
+
+			box.MouseEnter:Connect(function() updateHover(true) end)
+			box.MouseLeave:Connect(function() updateHover(false) end)
+
+			textBox.Focused:Connect(function()
+				tw(inputStroke, 0.2, {Color = rgb(90, 90, 120)})
+			end)
+
+			textBox.FocusLost:Connect(function(enterPressed)
+				tw(inputStroke, 0.2, {Color = rgb(45, 45, 58)})
+				if callback then callback(textBox.Text, enterPressed) end
+			end)
+
+			return textBox
+		end
+	}
+end
