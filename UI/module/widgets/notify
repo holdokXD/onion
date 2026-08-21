@@ -123,7 +123,6 @@ return function(ctx)
 			ZIndex = 3000001
 		}, notifyContainer)
 
-		-- Главный фрейм
 		local notifFrame = mk("Frame", {
 			Size = udim2(1, 0, 1, 0),
 			Position = udim2(0, 0, 0, 30),
@@ -131,22 +130,79 @@ return function(ctx)
 			BackgroundTransparency = 0.05,
 			ZIndex = 3000002
 		}, itemHolder)
-
-		-- Единое скругление для уведомления
 		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, notifFrame)
 
-		-- Идеальная обводка, которая применяет форму главного фрейма (идеально круглая)
-		local stroke = mk("UIStroke", {
-			Color = rgb(255, 255, 255),
-			Thickness = 1.5,
-			Transparency = 1 -- Старт прозрачным
+		local borderContainer = mk("Frame", {
+			Size = udim2(1, 0, 1, 0),
+			BackgroundTransparency = 1,
+			ZIndex = 3000006
 		}, notifFrame)
 
-		-- Градиент для эффекта таймера обводки
-		local strokeGradient = mk("UIGradient", {
-			Rotation = 90, -- Градиент идет сверху вниз
-			Transparency = NumberSequence.new(0)
-		}, stroke)
+		-- ЛЕВАЯ ПОЛОВИНА ОБВОДКИ
+		local leftHalf = mk("Frame", {
+			Size = udim2(0.5, 0, 1, 0),
+			Position = udim2(0, 0, 0, 0),
+			BackgroundTransparency = 1,
+			ClipsDescendants = true,
+			ZIndex = 3000007
+		}, borderContainer)
+
+		local leftStrokeFrame = mk("Frame", {
+			Size = udim2(2, -2, 1, -2),
+			Position = udim2(0, 1, 0, 1),
+			BackgroundTransparency = 1,
+			ZIndex = 3000008
+		}, leftHalf)
+		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, leftStrokeFrame)
+
+		local leftStroke = mk("UIStroke", {
+			Color = rgb(255, 255, 255),
+			Thickness = 1.5,
+			Transparency = 1
+		}, leftStrokeFrame)
+
+		local leftGradient = mk("UIGradient", {
+			Rotation = 0,
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0),
+				NumberSequenceKeypoint.new(0.5, 0),
+				NumberSequenceKeypoint.new(0.501, 1),
+				NumberSequenceKeypoint.new(1, 1)
+			})
+		}, leftStroke)
+
+		-- ПРАВАЯ ПОЛОВИНА ОБВОДКИ
+		local rightHalf = mk("Frame", {
+			Size = udim2(0.5, 0, 1, 0),
+			Position = udim2(0.5, 0, 0, 0),
+			BackgroundTransparency = 1,
+			ClipsDescendants = true,
+			ZIndex = 3000007
+		}, borderContainer)
+
+		local rightStrokeFrame = mk("Frame", {
+			Size = udim2(2, -2, 1, -2),
+			Position = udim2(-1, 1, 0, 1),
+			BackgroundTransparency = 1,
+			ZIndex = 3000008
+		}, rightHalf)
+		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, rightStrokeFrame)
+
+		local rightStroke = mk("UIStroke", {
+			Color = rgb(255, 255, 255),
+			Thickness = 1.5,
+			Transparency = 1
+		}, rightStrokeFrame)
+
+		local rightGradient = mk("UIGradient", {
+			Rotation = 180,
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0),
+				NumberSequenceKeypoint.new(0.5, 0),
+				NumberSequenceKeypoint.new(0.501, 1),
+				NumberSequenceKeypoint.new(1, 1)
+			})
+		}, rightStroke)
 
 		local particleContainer = mk("Frame", {
 			Size = udim2(1, 0, 1, 0),
@@ -155,7 +211,6 @@ return function(ctx)
 			ZIndex = 3000003
 		}, notifFrame)
 		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, particleContainer)
-
 		local particles = attachParticles(particleContainer, 3000003)
 
 		local content = mk("Frame", {
@@ -191,57 +246,25 @@ return function(ctx)
 			ZIndex = 3000005
 		}, content)
 
-		-- Анимация появления
-		tw(notifFrame, 0.4, {
-			Position = udim2(0, 0, 0, 0)
-		}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-
+		-- Анимации появления
+		tw(notifFrame, 0.4, {Position = udim2(0, 0, 0, 0)}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		tw(titleLabel, 0.35, {TextTransparency = 0})
 		tw(descLabel, 0.35, {TextTransparency = 0})
-		tw(stroke, 0.35, {Transparency = 0.1})
-
-		-- Логика таймера
-		local elapsed = 0
-		local timerConn
 		
-		timerConn = RS.RenderStepped:Connect(function(dt)
-			if not notifFrame or not notifFrame.Parent then
-				if timerConn then timerConn:Disconnect() end
-				return
-			end
+		tw(leftStroke, 0.35, {Transparency = 0.15})
+		tw(rightStroke, 0.35, {Transparency = 0.15})
 
-			elapsed = elapsed + dt
-			local progress = clamp(elapsed / duration, 0, 1)
-
-			if progress <= 0.001 then
-				strokeGradient.Transparency = NumberSequence.new(0)
-			elseif progress >= 0.999 then
-				strokeGradient.Transparency = NumberSequence.new(1)
-			else
-				-- Создаем резкую границу между невидимым (сверху) и видимым (снизу)
-				local p0 = clamp(progress - 0.001, 0, 0.998)
-				local p1 = clamp(progress + 0.001, p0 + 0.001, 1)
-
-				strokeGradient.Transparency = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 1),
-					NumberSequenceKeypoint.new(p0, 1),
-					NumberSequenceKeypoint.new(p1, 0),
-					NumberSequenceKeypoint.new(1, 0)
-				})
-			end
-
-			if progress >= 1 then
-				if timerConn then timerConn:Disconnect() end
-			end
-		end)
+		-- Круговая анимация таймера (расходится сверху в стороны и сходится снизу)
+		tw(leftGradient, duration, {Rotation = -180}, Enum.EasingStyle.Linear)
+		tw(rightGradient, duration, {Rotation = 360}, Enum.EasingStyle.Linear)
 
 		-- Очистка
 		task.delay(duration, function()
-			if timerConn then timerConn:Disconnect() end
 			if notifFrame and notifFrame.Parent then
 				if particles then particles.setFade(0) end
 
-				tw(stroke, 0.2, {Transparency = 1})
+				tw(leftStroke, 0.2, {Transparency = 1})
+				tw(rightStroke, 0.2, {Transparency = 1})
 				tw(titleLabel, 0.15, {TextTransparency = 1})
 				tw(descLabel, 0.15, {TextTransparency = 1})
 
