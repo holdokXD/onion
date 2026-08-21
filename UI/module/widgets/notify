@@ -115,7 +115,7 @@ return function(ctx)
 		config = type(config) == "table" and config or {Text = tostring(config)}
 		local title = getText(config.Title or {ru = "УВЕДОМЛЕНИЕ", en = "NOTIFICATION"}, ctx.currentLang)
 		local desc = getText(config.Text or config.Description or "", ctx.currentLang)
-		local duration = config.Duration or 3
+		local duration = tonumber(config.Duration) or 3
 
 		local itemHolder = mk("Frame", {
 			Size = udim2(1, 0, 0, 58),
@@ -138,7 +138,6 @@ return function(ctx)
 			ZIndex = 3000006
 		}, notifFrame)
 
-		-- ЛЕВАЯ ПОЛОВИНА ОБВОДКИ
 		local leftHalf = mk("Frame", {
 			Size = udim2(0.5, 0, 1, 0),
 			Position = udim2(0, 0, 0, 0),
@@ -171,7 +170,6 @@ return function(ctx)
 			})
 		}, leftStroke)
 
-		-- ПРАВАЯ ПОЛОВИНА ОБВОДКИ
 		local rightHalf = mk("Frame", {
 			Size = udim2(0.5, 0, 1, 0),
 			Position = udim2(0.5, 0, 0, 0),
@@ -246,7 +244,6 @@ return function(ctx)
 			ZIndex = 3000005
 		}, content)
 
-		-- Анимации появления
 		tw(notifFrame, 0.4, {Position = udim2(0, 0, 0, 0)}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		tw(titleLabel, 0.35, {TextTransparency = 0})
 		tw(descLabel, 0.35, {TextTransparency = 0})
@@ -254,11 +251,9 @@ return function(ctx)
 		tw(leftStroke, 0.35, {Transparency = 0.15})
 		tw(rightStroke, 0.35, {Transparency = 0.15})
 
-		-- Круговая анимация таймера (расходится сверху в стороны и сходится снизу)
 		tw(leftGradient, duration, {Rotation = -180}, Enum.EasingStyle.Linear)
 		tw(rightGradient, duration, {Rotation = 360}, Enum.EasingStyle.Linear)
 
-		-- Очистка
 		task.delay(duration, function()
 			if notifFrame and notifFrame.Parent then
 				if particles then particles.setFade(0) end
