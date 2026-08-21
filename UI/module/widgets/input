@@ -25,7 +25,7 @@ return function(ctx)
 				AnchorPoint = vec2(1, 0.5),
 				BackgroundColor3 = rgb(25, 25, 32),
 				BackgroundTransparency = 0.5,
-				ZIndex = 2000002
+				ZIndex = 2000003
 			}, box)
 			mk("UICorner", {CornerRadius = UDim.new(0, 6)}, inputContainer)
 			local inputStroke = mk("UIStroke", {Color = rgb(45, 45, 58), Thickness = 1}, inputContainer)
@@ -41,8 +41,10 @@ return function(ctx)
 				TextSize = 12,
 				Font = Enum.Font.Gotham,
 				ClearTextOnFocus = false,
+				TextEditable = true,
+				Active = true,
 				TextXAlignment = Enum.TextXAlignment.Left,
-				ZIndex = 2000002
+				ZIndex = 2000005
 			}, inputContainer)
 
 			box.MouseEnter:Connect(function() updateHover(true) end)
