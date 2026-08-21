@@ -6,6 +6,7 @@ return function(ctx)
 			local box, stroke, updateHover = makeBox(parent, udim2(1, -10, 0, 38))
 			box.BackgroundTransparency = 0.5
 			box.ZIndex = 2000002
+			box.Active = false
 			
 			mk("TextLabel", {
 				Size = udim2(0.45, -12, 1, 0),
@@ -16,7 +17,7 @@ return function(ctx)
 				TextSize = 13,
 				Font = Enum.Font.GothamMedium,
 				TextXAlignment = Enum.TextXAlignment.Left,
-				ZIndex = 2000002
+				ZIndex = 2000003
 			}, box)
 
 			local inputContainer = mk("Frame", {
@@ -25,7 +26,8 @@ return function(ctx)
 				AnchorPoint = vec2(1, 0.5),
 				BackgroundColor3 = rgb(25, 25, 32),
 				BackgroundTransparency = 0.5,
-				ZIndex = 2000003
+				ZIndex = 2000004,
+				Active = false
 			}, box)
 			mk("UICorner", {CornerRadius = UDim.new(0, 6)}, inputContainer)
 			local inputStroke = mk("UIStroke", {Color = rgb(45, 45, 58), Thickness = 1}, inputContainer)
@@ -43,8 +45,9 @@ return function(ctx)
 				ClearTextOnFocus = false,
 				TextEditable = true,
 				Active = true,
+				Selectable = true,
 				TextXAlignment = Enum.TextXAlignment.Left,
-				ZIndex = 2000005
+				ZIndex = 2000010
 			}, inputContainer)
 
 			box.MouseEnter:Connect(function() updateHover(true) end)
