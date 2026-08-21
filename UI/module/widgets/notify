@@ -115,7 +115,7 @@ return function(ctx)
 		config = type(config) == "table" and config or {Text = tostring(config)}
 		local title = getText(config.Title or {ru = "УВЕДОМЛЕНИЕ", en = "NOTIFICATION"}, ctx.currentLang)
 		local desc = getText(config.Text or config.Description or "", ctx.currentLang)
-		local duration = tonumber(config.Duration) or 3
+		local duration = tonumber(config.Duration) or ctx.defaultNotifyDuration or 3
 
 		local itemHolder = mk("Frame", {
 			Size = udim2(1, 0, 0, 58),
@@ -219,7 +219,7 @@ return function(ctx)
 
 		local titleLabel = mk("TextLabel", {
 			Size = udim2(1, -24, 0, 16),
-			Position = udim2(0, 12, 0, 9),
+			Position = udim2(0, 12, 0, 7),
 			BackgroundTransparency = 1,
 			Text = string.upper(title),
 			TextColor3 = rgb(255, 255, 255),
@@ -232,7 +232,7 @@ return function(ctx)
 
 		local descLabel = mk("TextLabel", {
 			Size = udim2(1, -24, 0, 22),
-			Position = udim2(0, 12, 0, 26),
+			Position = udim2(0, 12, 0, 24),
 			BackgroundTransparency = 1,
 			Text = desc,
 			TextColor3 = rgb(180, 180, 195),
@@ -244,6 +244,21 @@ return function(ctx)
 			ZIndex = 3000005
 		}, content)
 
+		local progressBg = mk("Frame", {
+			Size = udim2(1, -24, 0, 2),
+			Position = udim2(0, 12, 1, -6),
+			BackgroundColor3 = rgb(35, 35, 45),
+			ZIndex = 3000005
+		}, content)
+		mk("UICorner", {CornerRadius = UDim.new(1, 0)}, progressBg)
+
+		local progressFill = mk("Frame", {
+			Size = udim2(1, 0, 1, 0),
+			BackgroundColor3 = rgb(255, 255, 255),
+			ZIndex = 3000006
+		}, progressBg)
+		mk("UICorner", {CornerRadius = UDim.new(1, 0)}, progressFill)
+
 		tw(notifFrame, 0.4, {Position = udim2(0, 0, 0, 0)}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		tw(titleLabel, 0.35, {TextTransparency = 0})
 		tw(descLabel, 0.35, {TextTransparency = 0})
@@ -253,6 +268,7 @@ return function(ctx)
 
 		tw(leftGradient, duration, {Rotation = -180}, Enum.EasingStyle.Linear)
 		tw(rightGradient, duration, {Rotation = 360}, Enum.EasingStyle.Linear)
+		tw(progressFill, duration, {Size = udim2(0, 0, 1, 0)}, Enum.EasingStyle.Linear)
 
 		task.delay(duration, function()
 			if notifFrame and notifFrame.Parent then
@@ -262,6 +278,8 @@ return function(ctx)
 				tw(rightStroke, 0.2, {Transparency = 1})
 				tw(titleLabel, 0.15, {TextTransparency = 1})
 				tw(descLabel, 0.15, {TextTransparency = 1})
+				tw(progressBg, 0.15, {BackgroundTransparency = 1})
+				tw(progressFill, 0.15, {BackgroundTransparency = 1})
 
 				tw(notifFrame, 0.3, {
 					Size = udim2(0, 0, 0, 0),
