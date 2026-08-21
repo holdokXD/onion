@@ -128,26 +128,34 @@ return function(ctx)
 			Position = udim2(0, 0, 0, 30),
 			BackgroundColor3 = rgb(10, 10, 12),
 			BackgroundTransparency = 0.05,
-			ClipsDescendants = true,
+			ClipsDescendants = false,
 			ZIndex = 3000002
 		}, itemHolder)
 
 		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, notifFrame)
 
+		local timerClip = mk("Frame", {
+			Size = udim2(1, 0, 1, 0),
+			Position = udim2(0, 0, 0, 0),
+			BackgroundTransparency = 1,
+			ClipsDescendants = true,
+			ZIndex = 3000006
+		}, notifFrame)
+
+		local strokeFrame = mk("Frame", {
+			Size = udim2(1, 0, 1, 0),
+			Position = udim2(0, 0, 0, 0),
+			BackgroundTransparency = 1,
+			ZIndex = 3000007
+		}, timerClip)
+
+		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, strokeFrame)
+
 		local stroke = mk("UIStroke", {
 			Color = rgb(255, 255, 255),
 			Thickness = 1.5,
 			Transparency = 1
-		}, notifFrame)
-
-		local strokeGradient = mk("UIGradient", {
-			Rotation = 90,
-			Color = ColorSequence.new(rgb(255, 255, 255)),
-			Transparency = NumberSequence.new({
-				NumberSequenceKeypoint.new(0, 0),
-				NumberSequenceKeypoint.new(1, 0)
-			})
-		}, stroke)
+		}, strokeFrame)
 
 		local particleContainer = mk("Frame", {
 			Size = udim2(1, 0, 1, 0),
@@ -197,36 +205,18 @@ return function(ctx)
 
 		tw(titleLabel, 0.35, {TextTransparency = 0})
 		tw(descLabel, 0.35, {TextTransparency = 0})
-		tw(stroke, 0.35, {Transparency = 0.1})
+		tw(stroke, 0.35, {Transparency = 0.2})
 
-		local elapsed = 0
-		local timerConn
-		timerConn = RS.RenderStepped:Connect(function(dt)
-			if not notifFrame or not notifFrame.Parent then
-				if timerConn then timerConn:Disconnect() end
-				return
-			end
+		tw(timerClip, duration, {
+			Size = udim2(1, 0, 0, 0),
+			Position = udim2(0, 0, 1, 0)
+		}, Enum.EasingStyle.Linear)
 
-			elapsed = elapsed + dt
-			local progress = clamp(elapsed / duration, 0, 1)
-
-			local topOpacity = clamp(1 - (progress * 1.8), 0, 1)
-			local btmOpacity = clamp(1 - progress, 0, 1)
-
-			strokeGradient.Transparency = NumberSequence.new({
-				NumberSequenceKeypoint.new(0, 1 - topOpacity),
-				NumberSequenceKeypoint.new(clamp(0.5 * progress, 0.01, 0.49), 1 - btmOpacity),
-				NumberSequenceKeypoint.new(clamp(1 - (0.5 * progress), 0.51, 0.99), 1 - btmOpacity),
-				NumberSequenceKeypoint.new(1, 1 - topOpacity)
-			})
-
-			if progress >= 1 then
-				if timerConn then timerConn:Disconnect() end
-			end
-		end)
+		tw(strokeFrame, duration, {
+			Position = udim2(0, 0, -1, 0)
+		}, Enum.EasingStyle.Linear)
 
 		task.delay(duration, function()
-			if timerConn then timerConn:Disconnect() end
 			if notifFrame and notifFrame.Parent then
 				if particles then particles.setFade(0) end
 
