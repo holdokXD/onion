@@ -128,34 +128,21 @@ return function(ctx)
 			Position = udim2(0, 0, 0, 30),
 			BackgroundColor3 = rgb(10, 10, 12),
 			BackgroundTransparency = 0.05,
-			ClipsDescendants = false,
 			ZIndex = 3000002
 		}, itemHolder)
 
 		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, notifFrame)
 
-		local timerClip = mk("Frame", {
-			Size = udim2(1, 0, 1, 0),
-			Position = udim2(0, 0, 0, 0),
-			BackgroundTransparency = 1,
-			ClipsDescendants = true,
-			ZIndex = 3000006
-		}, notifFrame)
-
-		local strokeFrame = mk("Frame", {
-			Size = udim2(1, 0, 1, 0),
-			Position = udim2(0, 0, 0, 0),
-			BackgroundTransparency = 1,
-			ZIndex = 3000007
-		}, timerClip)
-
-		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, strokeFrame)
-
 		local stroke = mk("UIStroke", {
 			Color = rgb(255, 255, 255),
 			Thickness = 1.5,
 			Transparency = 1
-		}, strokeFrame)
+		}, notifFrame)
+
+		local strokeGradient = mk("UIGradient", {
+			Rotation = 90,
+			Transparency = NumberSequence.new(0)
+		}, stroke)
 
 		local particleContainer = mk("Frame", {
 			Size = udim2(1, 0, 1, 0),
@@ -163,6 +150,7 @@ return function(ctx)
 			ClipsDescendants = true,
 			ZIndex = 3000003
 		}, notifFrame)
+		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, particleContainer)
 
 		local particles = attachParticles(particleContainer, 3000003)
 
@@ -207,16 +195,41 @@ return function(ctx)
 		tw(descLabel, 0.35, {TextTransparency = 0})
 		tw(stroke, 0.35, {Transparency = 0.2})
 
-		tw(timerClip, duration, {
-			Size = udim2(1, 0, 0, 0),
-			Position = udim2(0, 0, 1, 0)
-		}, Enum.EasingStyle.Linear)
+		local elapsed = 0
+		local timerConn
+		
+		timerConn = RS.RenderStepped:Connect(function(dt)
+			if not notifFrame or not notifFrame.Parent then
+				if timerConn then timerConn:Disconnect() end
+				return
+			end
 
-		tw(strokeFrame, duration, {
-			Position = udim2(0, 0, -1, 0)
-		}, Enum.EasingStyle.Linear)
+			elapsed = elapsed + dt
+			local progress = clamp(elapsed / duration, 0, 1)
+
+			if progress <= 0.001 then
+				strokeGradient.Transparency = NumberSequence.new(0)
+			elseif progress >= 0.999 then
+				strokeGradient.Transparency = NumberSequence.new(1)
+			else
+				local t1 = clamp(progress - 0.02, 0, 0.998)
+				local t2 = clamp(progress + 0.02, t1 + 0.001, 0.999)
+
+				strokeGradient.Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 1),
+					NumberSequenceKeypoint.new(t1, 1),
+					NumberSequenceKeypoint.new(t2, 0),
+					NumberSequenceKeypoint.new(1, 0)
+				})
+			end
+
+			if progress >= 1 then
+				if timerConn then timerConn:Disconnect() end
+			end
+		end)
 
 		task.delay(duration, function()
+			if timerConn then timerConn:Disconnect() end
 			if notifFrame and notifFrame.Parent then
 				if particles then particles.setFade(0) end
 
