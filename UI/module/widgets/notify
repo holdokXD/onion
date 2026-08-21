@@ -5,8 +5,8 @@ return function(ctx)
 	if not notifyContainer then
 		notifyContainer = mk("Frame", {
 			Name = "NotifyContainer",
-			Size = udim2(0, 280, 1, -20),
-			Position = udim2(0.5, 0, 1, -15),
+			Size = udim2(0, 320, 1, -20),
+			Position = udim2(0.5, 0, 1, -20),
 			AnchorPoint = vec2(0.5, 1),
 			BackgroundTransparency = 1,
 			ZIndex = 3000000,
@@ -28,16 +28,15 @@ return function(ctx)
 		local duration = config.Duration or 3
 
 		local itemHolder = mk("Frame", {
-			Size = udim2(1, 0, 0, 54),
+			Size = udim2(1, 0, 0, 56),
 			BackgroundTransparency = 1,
 			ZIndex = 3000001
 		}, notifyContainer)
 
 		local notifFrame = mk("Frame", {
 			Size = udim2(1, 0, 1, 0),
-			Position = udim2(0, 0, 0, 25),
-			AnchorPoint = vec2(0, 0),
-			BackgroundColor3 = rgb(18, 18, 24),
+			Position = udim2(0, 0, 0, 30),
+			BackgroundColor3 = rgb(16, 16, 22),
 			BackgroundTransparency = 1,
 			ClipsDescendants = true,
 			ZIndex = 3000002
@@ -53,8 +52,8 @@ return function(ctx)
 		}, notifFrame)
 
 		local titleLabel = mk("TextLabel", {
-			Size = udim2(1, -20, 0, 16),
-			Position = udim2(0, 10, 0, 8),
+			Size = udim2(1, -24, 0, 16),
+			Position = udim2(0, 12, 0, 9),
 			BackgroundTransparency = 1,
 			Text = string.upper(title),
 			TextColor3 = rgb(240, 240, 245),
@@ -66,8 +65,8 @@ return function(ctx)
 		}, content)
 
 		local descLabel = mk("TextLabel", {
-			Size = udim2(1, -20, 0, 22),
-			Position = udim2(0, 10, 0, 24),
+			Size = udim2(1, -24, 0, 22),
+			Position = udim2(0, 12, 0, 26),
 			BackgroundTransparency = 1,
 			Text = desc,
 			TextColor3 = rgb(160, 160, 175),
@@ -79,36 +78,42 @@ return function(ctx)
 			ZIndex = 3000004
 		}, content)
 
-		local progressBar = mk("Frame", {
-			Size = udim2(1, 0, 0, 2),
-			Position = udim2(0, 0, 1, -2),
-			BackgroundColor3 = rgb(90, 90, 255),
+		local progressBarBg = mk("Frame", {
+			Size = udim2(1, -24, 0, 2),
+			Position = udim2(0, 12, 1, -6),
 			BackgroundTransparency = 1,
 			ZIndex = 3000005
 		}, notifFrame)
+
+		local progressBar = mk("Frame", {
+			Size = udim2(1, 0, 1, 0),
+			BackgroundColor3 = rgb(90, 90, 255),
+			BackgroundTransparency = 1,
+			ZIndex = 3000006
+		}, progressBarBg)
 		mk("UICorner", {CornerRadius = UDim.new(1, 0)}, progressBar)
 
-		tw(notifFrame, 0.35, {
+		tw(notifFrame, 0.4, {
 			Position = udim2(0, 0, 0, 0),
 			BackgroundTransparency = 0.15
-		}, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+		}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
 		tw(stroke, 0.35, {Transparency = 0})
 		tw(titleLabel, 0.35, {TextTransparency = 0})
 		tw(descLabel, 0.35, {TextTransparency = 0})
 		tw(progressBar, 0.35, {BackgroundTransparency = 0})
 
-		tw(progressBar, duration, {Size = udim2(0, 0, 0, 2)}, Enum.EasingStyle.Linear)
+		tw(progressBar, duration, {Size = udim2(0, 0, 1, 0)}, Enum.EasingStyle.Linear)
 
 		task.delay(duration, function()
 			if notifFrame and notifFrame.Parent then
 				notifFrame.AnchorPoint = vec2(0.5, 0.5)
 				notifFrame.Position = udim2(0.5, 0, 0.5, 0)
 
-				tw(stroke, 0.25, {Transparency = 1})
-				tw(titleLabel, 0.2, {TextTransparency = 1})
-				tw(descLabel, 0.2, {TextTransparency = 1})
-				tw(progressBar, 0.2, {BackgroundTransparency = 1})
+				tw(stroke, 0.2, {Transparency = 1})
+				tw(titleLabel, 0.15, {TextTransparency = 1})
+				tw(descLabel, 0.15, {TextTransparency = 1})
+				tw(progressBar, 0.15, {BackgroundTransparency = 1})
 
 				tw(notifFrame, 0.3, {
 					Size = udim2(0, 0, 0, 0),
