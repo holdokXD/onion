@@ -123,6 +123,7 @@ return function(ctx)
 			ZIndex = 3000001
 		}, notifyContainer)
 
+		-- Главный фрейм
 		local notifFrame = mk("Frame", {
 			Size = udim2(1, 0, 1, 0),
 			Position = udim2(0, 0, 0, 30),
@@ -131,16 +132,19 @@ return function(ctx)
 			ZIndex = 3000002
 		}, itemHolder)
 
+		-- Единое скругление для уведомления
 		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, notifFrame)
 
+		-- Идеальная обводка, которая применяет форму главного фрейма (идеально круглая)
 		local stroke = mk("UIStroke", {
 			Color = rgb(255, 255, 255),
 			Thickness = 1.5,
-			Transparency = 1
+			Transparency = 1 -- Старт прозрачным
 		}, notifFrame)
 
+		-- Градиент для эффекта таймера обводки
 		local strokeGradient = mk("UIGradient", {
-			Rotation = 90,
+			Rotation = 90, -- Градиент идет сверху вниз
 			Transparency = NumberSequence.new(0)
 		}, stroke)
 
@@ -187,14 +191,16 @@ return function(ctx)
 			ZIndex = 3000005
 		}, content)
 
+		-- Анимация появления
 		tw(notifFrame, 0.4, {
 			Position = udim2(0, 0, 0, 0)
 		}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
 		tw(titleLabel, 0.35, {TextTransparency = 0})
 		tw(descLabel, 0.35, {TextTransparency = 0})
-		tw(stroke, 0.35, {Transparency = 0.2})
+		tw(stroke, 0.35, {Transparency = 0.1})
 
+		-- Логика таймера
 		local elapsed = 0
 		local timerConn
 		
@@ -212,13 +218,14 @@ return function(ctx)
 			elseif progress >= 0.999 then
 				strokeGradient.Transparency = NumberSequence.new(1)
 			else
-				local t1 = clamp(progress - 0.02, 0, 0.998)
-				local t2 = clamp(progress + 0.02, t1 + 0.001, 0.999)
+				-- Создаем резкую границу между невидимым (сверху) и видимым (снизу)
+				local p0 = clamp(progress - 0.001, 0, 0.998)
+				local p1 = clamp(progress + 0.001, p0 + 0.001, 1)
 
 				strokeGradient.Transparency = NumberSequence.new({
 					NumberSequenceKeypoint.new(0, 1),
-					NumberSequenceKeypoint.new(t1, 1),
-					NumberSequenceKeypoint.new(t2, 0),
+					NumberSequenceKeypoint.new(p0, 1),
+					NumberSequenceKeypoint.new(p1, 0),
 					NumberSequenceKeypoint.new(1, 0)
 				})
 			end
@@ -228,6 +235,7 @@ return function(ctx)
 			end
 		end)
 
+		-- Очистка
 		task.delay(duration, function()
 			if timerConn then timerConn:Disconnect() end
 			if notifFrame and notifFrame.Parent then
