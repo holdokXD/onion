@@ -138,6 +138,7 @@ return function(ctx)
 			ZIndex = 3000006
 		}, notifFrame)
 
+		-- ЛЕВАЯ ПОЛОВИНА
 		local leftHalf = mk("Frame", {
 			Size = udim2(0.5, 0, 1, 0),
 			Position = udim2(0, 0, 0, 0),
@@ -147,8 +148,8 @@ return function(ctx)
 		}, borderContainer)
 
 		local leftStrokeFrame = mk("Frame", {
-			Size = udim2(2, -2, 1, -2),
-			Position = udim2(0, 1, 0, 1),
+			Size = udim2(2, 0, 1, 0),
+			Position = udim2(0, 0, 0, 0),
 			BackgroundTransparency = 1,
 			ZIndex = 3000008
 		}, leftHalf)
@@ -157,19 +158,21 @@ return function(ctx)
 		local leftStroke = mk("UIStroke", {
 			Color = rgb(255, 255, 255),
 			Thickness = 1.5,
-			Transparency = 1
+			Transparency = 1,
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border -- Ключевое изменение, чтобы не срезались края
 		}, leftStrokeFrame)
 
 		local leftGradient = mk("UIGradient", {
 			Rotation = 0,
 			Transparency = NumberSequence.new({
 				NumberSequenceKeypoint.new(0, 0),
-				NumberSequenceKeypoint.new(0.5, 0),
+				NumberSequenceKeypoint.new(0.499, 0), -- Смягченный край для фикса багов отрисовки
 				NumberSequenceKeypoint.new(0.501, 1),
 				NumberSequenceKeypoint.new(1, 1)
 			})
 		}, leftStroke)
 
+		-- ПРАВАЯ ПОЛОВИНА
 		local rightHalf = mk("Frame", {
 			Size = udim2(0.5, 0, 1, 0),
 			Position = udim2(0.5, 0, 0, 0),
@@ -179,8 +182,8 @@ return function(ctx)
 		}, borderContainer)
 
 		local rightStrokeFrame = mk("Frame", {
-			Size = udim2(2, -2, 1, -2),
-			Position = udim2(-1, 1, 0, 1),
+			Size = udim2(2, 0, 1, 0),
+			Position = udim2(-1, 0, 0, 0),
 			BackgroundTransparency = 1,
 			ZIndex = 3000008
 		}, rightHalf)
@@ -189,14 +192,15 @@ return function(ctx)
 		local rightStroke = mk("UIStroke", {
 			Color = rgb(255, 255, 255),
 			Thickness = 1.5,
-			Transparency = 1
+			Transparency = 1,
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 		}, rightStrokeFrame)
 
 		local rightGradient = mk("UIGradient", {
 			Rotation = 180,
 			Transparency = NumberSequence.new({
 				NumberSequenceKeypoint.new(0, 0),
-				NumberSequenceKeypoint.new(0.5, 0),
+				NumberSequenceKeypoint.new(0.499, 0),
 				NumberSequenceKeypoint.new(0.501, 1),
 				NumberSequenceKeypoint.new(1, 1)
 			})
@@ -251,10 +255,19 @@ return function(ctx)
 		tw(leftStroke, 0.35, {Transparency = 0.15})
 		tw(rightStroke, 0.35, {Transparency = 0.15})
 
+		local halfDuration = duration / 2
+
 		task.delay(0.35, function()
 			if notifFrame and notifFrame.Parent then
-				tw(leftGradient, duration, {Rotation = -180}, Enum.EasingStyle.Linear)
-				tw(rightGradient, duration, {Rotation = 360}, Enum.EasingStyle.Linear)
+				-- Убывает правая половина (как часовая стрелка)
+				tw(rightGradient, halfDuration, {Rotation = 360}, Enum.EasingStyle.Linear)
+				
+				task.delay(halfDuration, function()
+					if notifFrame and notifFrame.Parent then
+						-- Убывает левая половина
+						tw(leftGradient, halfDuration, {Rotation = -180}, Enum.EasingStyle.Linear)
+					end
+				end)
 			end
 		end)
 
