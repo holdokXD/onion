@@ -176,53 +176,75 @@ return function(ctx)
 			ZIndex = 3000005
 		}, content)
 
-		local strokeContainer = mk("Frame", {
+		local borderContainer = mk("Frame", {
 			Size = udim2(1, 0, 1, 0),
 			BackgroundTransparency = 1,
 			ZIndex = 3000006
 		}, notifFrame)
 
-		local topBorder = mk("Frame", {
-			Size = udim2(1, 0, 0, 1),
+		local leftHalf = mk("Frame", {
+			Size = udim2(0.5, 0, 1, 0),
+			Position = udim2(0, 0, 0, 0),
+			BackgroundTransparency = 1,
+			ClipsDescendants = true,
+			ZIndex = 3000007
+		}, borderContainer)
+
+		local rightHalf = mk("Frame", {
+			Size = udim2(0.5, 0, 1, 0),
 			Position = udim2(0.5, 0, 0, 0),
-			AnchorPoint = vec2(0.5, 0),
+			BackgroundTransparency = 1,
+			ClipsDescendants = true,
+			ZIndex = 3000007
+		}, borderContainer)
+
+		local leftTop = mk("Frame", {
+			Size = udim2(1, 0, 0, 1),
+			Position = udim2(0, 0, 0, 0),
 			BackgroundColor3 = rgb(255, 255, 255),
 			BackgroundTransparency = 1,
-			ZIndex = 3000007
-		}, strokeContainer)
+			ZIndex = 3000008
+		}, leftHalf)
 
-		local leftBorder = mk("Frame", {
+		local leftSide = mk("Frame", {
 			Size = udim2(0, 1, 1, 0),
 			Position = udim2(0, 0, 0, 0),
 			BackgroundColor3 = rgb(255, 255, 255),
 			BackgroundTransparency = 1,
-			ZIndex = 3000007
-		}, strokeContainer)
+			ZIndex = 3000008
+		}, leftHalf)
 
-		local rightBorder = mk("Frame", {
+		local leftBottom = mk("Frame", {
+			Size = udim2(1, 0, 0, 1),
+			Position = udim2(0, 0, 1, -1),
+			BackgroundColor3 = rgb(255, 255, 255),
+			BackgroundTransparency = 1,
+			ZIndex = 3000008
+		}, leftHalf)
+
+		local rightTop = mk("Frame", {
+			Size = udim2(1, 0, 0, 1),
+			Position = udim2(0, 0, 0, 0),
+			BackgroundColor3 = rgb(255, 255, 255),
+			BackgroundTransparency = 1,
+			ZIndex = 3000008
+		}, rightHalf)
+
+		local rightSide = mk("Frame", {
 			Size = udim2(0, 1, 1, 0),
 			Position = udim2(1, -1, 0, 0),
 			BackgroundColor3 = rgb(255, 255, 255),
 			BackgroundTransparency = 1,
-			ZIndex = 3000007
-		}, strokeContainer)
+			ZIndex = 3000008
+		}, rightHalf)
 
-		local btmLeftBorder = mk("Frame", {
-			Size = udim2(0.5, 0, 0, 1),
+		local rightBottom = mk("Frame", {
+			Size = udim2(1, 0, 0, 1),
 			Position = udim2(0, 0, 1, -1),
 			BackgroundColor3 = rgb(255, 255, 255),
 			BackgroundTransparency = 1,
-			ZIndex = 3000007
-		}, strokeContainer)
-
-		local btmRightBorder = mk("Frame", {
-			Size = udim2(0.5, 0, 0, 1),
-			Position = udim2(1, 0, 1, -1),
-			AnchorPoint = vec2(1, 0),
-			BackgroundColor3 = rgb(255, 255, 255),
-			BackgroundTransparency = 1,
-			ZIndex = 3000007
-		}, strokeContainer)
+			ZIndex = 3000008
+		}, rightHalf)
 
 		tw(notifFrame, 0.4, {
 			Position = udim2(0, 0, 0, 0)
@@ -231,17 +253,23 @@ return function(ctx)
 		tw(titleLabel, 0.35, {TextTransparency = 0})
 		tw(descLabel, 0.35, {TextTransparency = 0})
 
-		tw(topBorder, 0.35, {BackgroundTransparency = 0.3})
-		tw(leftBorder, 0.35, {BackgroundTransparency = 0.3})
-		tw(rightBorder, 0.35, {BackgroundTransparency = 0.3})
-		tw(btmLeftBorder, 0.35, {BackgroundTransparency = 0.3})
-		tw(btmRightBorder, 0.35, {BackgroundTransparency = 0.3})
+		tw(leftTop, 0.35, {BackgroundTransparency = 0.25})
+		tw(leftSide, 0.35, {BackgroundTransparency = 0.25})
+		tw(leftBottom, 0.35, {BackgroundTransparency = 0.25})
+		tw(rightTop, 0.35, {BackgroundTransparency = 0.25})
+		tw(rightSide, 0.35, {BackgroundTransparency = 0.25})
+		tw(rightBottom, 0.35, {BackgroundTransparency = 0.25})
 
-		tw(topBorder, duration * 0.25, {Size = udim2(0, 0, 0, 1)}, Enum.EasingStyle.Linear).Completed:Connect(function()
-			tw(leftBorder, duration * 0.35, {Size = udim2(0, 1, 0, 0), Position = udim2(0, 0, 1, 0)}, Enum.EasingStyle.Linear)
-			tw(rightBorder, duration * 0.35, {Size = udim2(0, 1, 0, 0), Position = udim2(1, -1, 1, 0)}, Enum.EasingStyle.Linear).Completed:Connect(function()
-				tw(btmLeftBorder, duration * 0.4, {Size = udim2(0, 0, 0, 1), Position = udim2(0.5, 0, 1, -1)}, Enum.EasingStyle.Linear)
-				tw(btmRightBorder, duration * 0.4, {Size = udim2(0, 0, 0, 1), Position = udim2(0.5, 0, 1, -1)}, Enum.EasingStyle.Linear)
+		local phase1 = duration * 0.3
+		local phase2 = duration * 0.35
+		local phase3 = duration * 0.35
+
+		tw(leftTop, phase1, {Size = udim2(0, 0, 0, 1)}, Enum.EasingStyle.Linear)
+		tw(rightTop, phase1, {Size = udim2(0, 0, 0, 1), Position = udim2(1, 0, 0, 0)}, Enum.EasingStyle.Linear).Completed:Connect(function()
+			tw(leftSide, phase2, {Size = udim2(0, 1, 0, 0), Position = udim2(0, 0, 1, 0)}, Enum.EasingStyle.Linear)
+			tw(rightSide, phase2, {Size = udim2(0, 1, 0, 0), Position = udim2(1, -1, 1, 0)}, Enum.EasingStyle.Linear).Completed:Connect(function()
+				tw(leftBottom, phase3, {Size = udim2(0, 0, 0, 1), Position = udim2(1, 0, 1, -1)}, Enum.EasingStyle.Linear)
+				tw(rightBottom, phase3, {Size = udim2(0, 0, 0, 1), Position = udim2(0, 0, 1, -1)}, Enum.EasingStyle.Linear)
 			end)
 		end)
 
@@ -251,11 +279,12 @@ return function(ctx)
 
 				tw(titleLabel, 0.15, {TextTransparency = 1})
 				tw(descLabel, 0.15, {TextTransparency = 1})
-				tw(topBorder, 0.15, {BackgroundTransparency = 1})
-				tw(leftBorder, 0.15, {BackgroundTransparency = 1})
-				tw(rightBorder, 0.15, {BackgroundTransparency = 1})
-				tw(btmLeftBorder, 0.15, {BackgroundTransparency = 1})
-				tw(btmRightBorder, 0.15, {BackgroundTransparency = 1})
+				tw(leftTop, 0.15, {BackgroundTransparency = 1})
+				tw(leftSide, 0.15, {BackgroundTransparency = 1})
+				tw(leftBottom, 0.15, {BackgroundTransparency = 1})
+				tw(rightTop, 0.15, {BackgroundTransparency = 1})
+				tw(rightSide, 0.15, {BackgroundTransparency = 1})
+				tw(rightBottom, 0.15, {BackgroundTransparency = 1})
 
 				tw(notifFrame, 0.3, {
 					Size = udim2(0, 0, 0, 0),
