@@ -140,7 +140,7 @@ return function(ctx)
 			Transparency = 1
 		}, notifFrame)
 
-		local gradient = mk("UIGradient", {
+		local strokeGradient = mk("UIGradient", {
 			Rotation = 90,
 			Color = ColorSequence.new(rgb(255, 255, 255)),
 			Transparency = NumberSequence.new({
@@ -210,13 +210,14 @@ return function(ctx)
 			elapsed = elapsed + dt
 			local progress = clamp(elapsed / duration, 0, 1)
 
-			local topOpacity = clamp(1 - (progress * 2), 0, 1)
-			local bottomOpacity = clamp(1 - progress, 0, 1)
+			local topOpacity = clamp(1 - (progress * 1.8), 0, 1)
+			local btmOpacity = clamp(1 - progress, 0, 1)
 
-			gradient.Transparency = NumberSequence.new({
+			strokeGradient.Transparency = NumberSequence.new({
 				NumberSequenceKeypoint.new(0, 1 - topOpacity),
-				NumberSequenceKeypoint.new(0.5, 1 - bottomOpacity),
-				NumberSequenceKeypoint.new(1, 1 - bottomOpacity)
+				NumberSequenceKeypoint.new(clamp(0.5 * progress, 0.01, 0.49), 1 - btmOpacity),
+				NumberSequenceKeypoint.new(clamp(1 - (0.5 * progress), 0.51, 0.99), 1 - btmOpacity),
+				NumberSequenceKeypoint.new(1, 1 - topOpacity)
 			})
 
 			if progress >= 1 then
