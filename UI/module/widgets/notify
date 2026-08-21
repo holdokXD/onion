@@ -37,7 +37,7 @@ return function(ctx)
 			Size = udim2(1, 0, 1, 0),
 			Position = udim2(0, 0, 0, 30),
 			BackgroundColor3 = rgb(16, 16, 22),
-			BackgroundTransparency = 1,
+			BackgroundTransparency = 0.15,
 			ClipsDescendants = true,
 			ZIndex = 3000002
 		}, itemHolder)
@@ -78,42 +78,39 @@ return function(ctx)
 			ZIndex = 3000004
 		}, content)
 
-		local progressBarBg = mk("Frame", {
-			Size = udim2(1, -24, 0, 2),
-			Position = udim2(0, 12, 1, -6),
+		local bottomBorderBg = mk("Frame", {
+			Size = udim2(1, 0, 0, 2),
+			Position = udim2(0, 0, 1, -2),
 			BackgroundTransparency = 1,
 			ZIndex = 3000005
 		}, notifFrame)
 
-		local progressBar = mk("Frame", {
+		local bottomBorder = mk("Frame", {
 			Size = udim2(1, 0, 1, 0),
-			BackgroundColor3 = rgb(90, 90, 255),
+			Position = udim2(0, 0, 0, 0),
+			BackgroundColor3 = rgb(255, 255, 255),
 			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
 			ZIndex = 3000006
-		}, progressBarBg)
-		mk("UICorner", {CornerRadius = UDim.new(1, 0)}, progressBar)
+		}, bottomBorderBg)
 
 		tw(notifFrame, 0.4, {
-			Position = udim2(0, 0, 0, 0),
-			BackgroundTransparency = 0.15
+			Position = udim2(0, 0, 0, 0)
 		}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
 		tw(stroke, 0.35, {Transparency = 0})
 		tw(titleLabel, 0.35, {TextTransparency = 0})
 		tw(descLabel, 0.35, {TextTransparency = 0})
-		tw(progressBar, 0.35, {BackgroundTransparency = 0})
+		tw(bottomBorder, 0.35, {BackgroundTransparency = 0})
 
-		tw(progressBar, duration, {Size = udim2(0, 0, 1, 0)}, Enum.EasingStyle.Linear)
+		tw(bottomBorder, duration, {Size = udim2(0, 0, 1, 0)}, Enum.EasingStyle.Linear)
 
 		task.delay(duration, function()
 			if notifFrame and notifFrame.Parent then
-				notifFrame.AnchorPoint = vec2(0.5, 0.5)
-				notifFrame.Position = udim2(0.5, 0, 0.5, 0)
-
 				tw(stroke, 0.2, {Transparency = 1})
 				tw(titleLabel, 0.15, {TextTransparency = 1})
 				tw(descLabel, 0.15, {TextTransparency = 1})
-				tw(progressBar, 0.15, {BackgroundTransparency = 1})
+				tw(bottomBorder, 0.15, {BackgroundTransparency = 1})
 
 				tw(notifFrame, 0.3, {
 					Size = udim2(0, 0, 0, 0),
