@@ -6,7 +6,7 @@ return function(ctx)
 	if not notifyContainer then
 		notifyContainer = mk("Frame", {
 			Name = "NotifyContainer",
-			Size = udim2(0, 320, 1, -20),
+			Size = udim2(0, 310, 1, -20),
 			Position = udim2(0.5, 0, 1, -20),
 			AnchorPoint = vec2(0.5, 1),
 			BackgroundTransparency = 1,
@@ -23,7 +23,7 @@ return function(ctx)
 	end
 
 	local function attachParticles(parentContainer, baseZIndex)
-		local NUM_NODES, MAX_DIST, nodes, linesPool, rng = 12, 55, {}, {}, Random.new()
+		local NUM_NODES, MAX_DIST, nodes, linesPool, rng = 10, 50, {}, {}, Random.new()
 		baseZIndex = baseZIndex or parentContainer.ZIndex
 
 		for i = 1, NUM_NODES do
@@ -31,17 +31,17 @@ return function(ctx)
 			local dot = mk("Frame", {
 				Size = udim2(0, sz, 0, sz),
 				AnchorPoint = vec2(0.5, 0.5),
-				BackgroundColor3 = rgb(255, 255, 255),
+				BackgroundColor3 = rgb(180, 190, 220),
 				BackgroundTransparency = 1,
 				ZIndex = baseZIndex
 			}, parentContainer)
 			mk("UICorner", {CornerRadius = UDim.new(1, 0)}, dot)
-			local speed, angle = rng:NextNumber(10, 25), rng:NextNumber(0, math.pi * 2)
+			local speed, angle = rng:NextNumber(10, 22), rng:NextNumber(0, math.pi * 2)
 			nodes[i] = {
 				frame = dot,
 				pos = vec2(rng:NextNumber(0, 1), rng:NextNumber(0, 1)),
 				vel = vec2(cos(angle) * speed, sin(angle) * speed),
-				maxAlpha = rng:NextNumber(0.35, 0.7),
+				maxAlpha = rng:NextNumber(0.3, 0.6),
 				offset = rng:NextNumber(0, 50),
 				spd = rng:NextNumber(2, 4),
 				screenPos = vec2(0, 0)
@@ -52,7 +52,7 @@ return function(ctx)
 			if not linesPool[idx] then
 				linesPool[idx] = mk("Frame", {
 					AnchorPoint = vec2(0.5, 0.5),
-					BackgroundColor3 = rgb(255, 255, 255),
+					BackgroundColor3 = rgb(150, 160, 190),
 					ZIndex = baseZIndex
 				}, parentContainer)
 			end
@@ -91,7 +91,7 @@ return function(ctx)
 						lineIdx = lineIdx + 1
 						local line = getLine(lineIdx)
 						line.Size, line.Position, line.Rotation = udim2(0, dist, 0, 1), udim2(0, (p1.X + p2.X) / 2, 0, (p1.Y + p2.Y) / 2), deg(atan2(diff.Y, diff.X))
-						line.BackgroundTransparency = 1 - ((1 - (dist / MAX_DIST)) * 0.25 * globalFade)
+						line.BackgroundTransparency = 1 - ((1 - (dist / MAX_DIST)) * 0.2 * globalFade)
 						line.Visible = true
 					end
 				end
@@ -118,93 +118,35 @@ return function(ctx)
 		local duration = tonumber(config.Duration) or ctx.defaultNotifyDuration or 3
 
 		local itemHolder = mk("Frame", {
-			Size = udim2(1, 0, 0, 58),
+			Size = udim2(1, 0, 0, 56),
 			BackgroundTransparency = 1,
 			ZIndex = 3000001
 		}, notifyContainer)
 
 		local notifFrame = mk("Frame", {
 			Size = udim2(1, 0, 1, 0),
-			Position = udim2(0, 0, 0, 30),
-			BackgroundColor3 = rgb(10, 10, 12),
+			Position = udim2(0, 0, 0, 25),
+			BackgroundColor3 = rgb(12, 12, 16),
 			BackgroundTransparency = 0.05,
 			ZIndex = 3000002
 		}, itemHolder)
 		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, notifFrame)
 
-		local borderContainer = mk("Frame", {
-			Size = udim2(1, 0, 1, 0),
-			BackgroundTransparency = 1,
-			ZIndex = 3000006
-		}, notifFrame)
-
-		-- ЛЕВАЯ ПОЛОВИНА
-		local leftHalf = mk("Frame", {
-			Size = udim2(0.5, 0, 1, 0),
-			Position = udim2(0, 0, 0, 0),
-			BackgroundTransparency = 1,
-			ClipsDescendants = true,
-			ZIndex = 3000007
-		}, borderContainer)
-
-		local leftStrokeFrame = mk("Frame", {
-			Size = udim2(2, 0, 1, 0),
-			Position = udim2(0, 0, 0, 0),
-			BackgroundTransparency = 1,
-			ZIndex = 3000008
-		}, leftHalf)
-		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, leftStrokeFrame)
-
-		local leftStroke = mk("UIStroke", {
-			Color = rgb(255, 255, 255),
-			Thickness = 1.5,
-			Transparency = 1,
-			ApplyStrokeMode = Enum.ApplyStrokeMode.Border -- Ключевое изменение, чтобы не срезались края
-		}, leftStrokeFrame)
-
-		local leftGradient = mk("UIGradient", {
-			Rotation = 0,
-			Transparency = NumberSequence.new({
-				NumberSequenceKeypoint.new(0, 0),
-				NumberSequenceKeypoint.new(0.499, 0), -- Смягченный край для фикса багов отрисовки
-				NumberSequenceKeypoint.new(0.501, 1),
-				NumberSequenceKeypoint.new(1, 1)
-			})
-		}, leftStroke)
-
-		-- ПРАВАЯ ПОЛОВИНА
-		local rightHalf = mk("Frame", {
-			Size = udim2(0.5, 0, 1, 0),
-			Position = udim2(0.5, 0, 0, 0),
-			BackgroundTransparency = 1,
-			ClipsDescendants = true,
-			ZIndex = 3000007
-		}, borderContainer)
-
-		local rightStrokeFrame = mk("Frame", {
-			Size = udim2(2, 0, 1, 0),
-			Position = udim2(-1, 0, 0, 0),
-			BackgroundTransparency = 1,
-			ZIndex = 3000008
-		}, rightHalf)
-		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, rightStrokeFrame)
-
-		local rightStroke = mk("UIStroke", {
-			Color = rgb(255, 255, 255),
-			Thickness = 1.5,
+		local stroke = mk("UIStroke", {
+			Color = rgb(45, 45, 60),
+			Thickness = 1,
 			Transparency = 1,
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-		}, rightStrokeFrame)
+		}, notifFrame)
 
-		local rightGradient = mk("UIGradient", {
-			Rotation = 180,
-			Transparency = NumberSequence.new({
-				NumberSequenceKeypoint.new(0, 0),
-				NumberSequenceKeypoint.new(0.499, 0),
-				NumberSequenceKeypoint.new(0.501, 1),
-				NumberSequenceKeypoint.new(1, 1)
-			})
-		}, rightStroke)
+		local strokeGrad = mk("UIGradient", {
+			Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, rgb(90, 95, 120)),
+				ColorSequenceKeypoint.new(0.5, rgb(40, 42, 55)),
+				ColorSequenceKeypoint.new(1, rgb(90, 95, 120))
+			}),
+			Rotation = 0
+		}, stroke)
 
 		local particleContainer = mk("Frame", {
 			Size = udim2(1, 0, 1, 0),
@@ -223,10 +165,10 @@ return function(ctx)
 
 		local titleLabel = mk("TextLabel", {
 			Size = udim2(1, -24, 0, 16),
-			Position = udim2(0, 12, 0, 9),
+			Position = udim2(0, 12, 0, 8),
 			BackgroundTransparency = 1,
 			Text = string.upper(title),
-			TextColor3 = rgb(255, 255, 255),
+			TextColor3 = rgb(240, 240, 250),
 			TextTransparency = 1,
 			TextSize = 11,
 			Font = Enum.Font.GothamBold,
@@ -236,10 +178,10 @@ return function(ctx)
 
 		local descLabel = mk("TextLabel", {
 			Size = udim2(1, -24, 0, 22),
-			Position = udim2(0, 12, 0, 26),
+			Position = udim2(0, 12, 0, 25),
 			BackgroundTransparency = 1,
 			Text = desc,
-			TextColor3 = rgb(180, 180, 195),
+			TextColor3 = rgb(160, 160, 175),
 			TextTransparency = 1,
 			TextSize = 11,
 			Font = Enum.Font.Gotham,
@@ -249,34 +191,16 @@ return function(ctx)
 		}, content)
 
 		tw(notifFrame, 0.4, {Position = udim2(0, 0, 0, 0)}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-		tw(titleLabel, 0.35, {TextTransparency = 0})
-		tw(descLabel, 0.35, {TextTransparency = 0})
-		
-		tw(leftStroke, 0.35, {Transparency = 0.15})
-		tw(rightStroke, 0.35, {Transparency = 0.15})
+		tw(titleLabel, 0.3, {TextTransparency = 0})
+		tw(descLabel, 0.3, {TextTransparency = 0})
+		tw(stroke, 0.3, {Transparency = 0})
+		tw(strokeGrad, duration, {Rotation = 360}, Enum.EasingStyle.Linear)
 
-		local halfDuration = duration / 2
-
-		task.delay(0.35, function()
-			if notifFrame and notifFrame.Parent then
-				-- Убывает правая половина (как часовая стрелка)
-				tw(rightGradient, halfDuration, {Rotation = 360}, Enum.EasingStyle.Linear)
-				
-				task.delay(halfDuration, function()
-					if notifFrame and notifFrame.Parent then
-						-- Убывает левая половина
-						tw(leftGradient, halfDuration, {Rotation = -180}, Enum.EasingStyle.Linear)
-					end
-				end)
-			end
-		end)
-
-		task.delay(duration + 0.35, function()
+		task.delay(duration + 0.3, function()
 			if notifFrame and notifFrame.Parent then
 				if particles then particles.setFade(0) end
 
-				tw(leftStroke, 0.2, {Transparency = 1})
-				tw(rightStroke, 0.2, {Transparency = 1})
+				tw(stroke, 0.2, {Transparency = 1})
 				tw(titleLabel, 0.15, {TextTransparency = 1})
 				tw(descLabel, 0.15, {TextTransparency = 1})
 
