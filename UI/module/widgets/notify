@@ -118,7 +118,7 @@ return function(ctx)
 		local duration = tonumber(config.Duration) or ctx.defaultNotifyDuration or 3
 
 		local itemHolder = mk("Frame", {
-			Size = udim2(1, 0, 0, 56),
+			Size = udim2(1, 0, 0, 0),
 			BackgroundTransparency = 1,
 			ClipsDescendants = true,
 			ZIndex = 3000001
@@ -182,12 +182,13 @@ return function(ctx)
 			ZIndex = 3000005
 		}, content)
 
+		tw(itemHolder, 0.35, {Size = udim2(1, 0, 0, 56)}, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 		tw(notifFrame, 0.35, {
 			Position = udim2(0, 0, 0, 0),
 			BackgroundTransparency = 0
-		}, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+		}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
-		tw(stroke, 0.35, {Transparency = 0})
+		tw(stroke, 0.3, {Transparency = 0})
 		tw(titleLabel, 0.3, {TextTransparency = 0})
 		tw(descLabel, 0.3, {TextTransparency = 0})
 
@@ -196,20 +197,19 @@ return function(ctx)
 				if particles then particles.setFade(0) end
 
 				tw(stroke, 0.25, {Transparency = 1})
-				tw(titleLabel, 0.2, {TextTransparency = 1})
-				tw(descLabel, 0.2, {TextTransparency = 1})
+				tw(titleLabel, 0.25, {TextTransparency = 1})
+				tw(descLabel, 0.25, {TextTransparency = 1})
 
-				tw(notifFrame, 0.3, {
+				tw(notifFrame, 0.35, {
 					Position = udim2(0, 0, 0, 25),
 					BackgroundTransparency = 1
-				}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+				}, Enum.EasingStyle.Back, Enum.EasingDirection.In)
 
-				task.wait(0.2)
-				tw(itemHolder, 0.25, {
+				tw(itemHolder, 0.35, {
 					Size = udim2(1, 0, 0, 0)
 				}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
 
-				task.wait(0.25)
+				task.wait(0.35)
 				if particles then particles.destroy() end
 				itemHolder:Destroy()
 			end
