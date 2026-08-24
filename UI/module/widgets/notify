@@ -16,7 +16,7 @@ return function(ctx)
 
 		mk("UIListLayout", {
 			SortOrder = Enum.SortOrder.LayoutOrder,
-			Padding = UDim.new(0, 8),
+			Padding = UDim.new(0, 4),
 			VerticalAlignment = Enum.VerticalAlignment.Bottom,
 			HorizontalAlignment = Enum.HorizontalAlignment.Center
 		}, notifyContainer)
@@ -127,18 +127,20 @@ return function(ctx)
 		}, notifyContainer)
 
 		local notifFrame = mk("Frame", {
-			Size = udim2(1, 0, 1, 0),
-			Position = udim2(0, 0, 0, 25),
+			Size = udim2(1, -8, 0, 52),
+			Position = udim2(0.5, 0, 1, -4),
+			AnchorPoint = vec2(0.5, 1),
 			BackgroundColor3 = rgb(10, 10, 12),
 			BackgroundTransparency = 0,
 			ZIndex = 3000002
 		}, itemHolder)
 		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, notifFrame)
 
-		mk("UIStroke", {
+		local stroke = mk("UIStroke", {
 			Color = rgb(35, 35, 45),
 			Thickness = 1,
-			Transparency = 0
+			Transparency = 0,
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
 		}, notifFrame)
 
 		local particleContainer = mk("Frame", {
@@ -170,8 +172,8 @@ return function(ctx)
 		}, content)
 
 		local descLabel = mk("TextLabel", {
-			Size = udim2(1, -24, 0, 22),
-			Position = udim2(0, 12, 0, 25),
+			Size = udim2(1, -24, 0, 20),
+			Position = udim2(0, 12, 0, 26),
 			BackgroundTransparency = 1,
 			Text = desc,
 			TextColor3 = rgb(160, 160, 175),
@@ -183,22 +185,23 @@ return function(ctx)
 			ZIndex = 3000005
 		}, content)
 
-		tw(itemHolder, 0.35, {Size = udim2(1, 0, 0, 56)}, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-		tw(notifFrame, 0.35, {Position = udim2(0, 0, 0, 0)}, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+		tw(itemHolder, 0.4, {Size = udim2(1, 0, 0, 60)}, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 		tw(titleLabel, 0.35, {TextTransparency = 0})
 		tw(descLabel, 0.35, {TextTransparency = 0})
 
-		task.delay(duration + 0.35, function()
+		task.delay(duration + 0.4, function()
 			if notifFrame and notifFrame.Parent then
 				if particles then particles.setFade(0) end
 
 				tw(titleLabel, 0.25, {TextTransparency = 1})
 				tw(descLabel, 0.25, {TextTransparency = 1})
+				tw(stroke, 0.25, {Transparency = 1})
 
-				tw(notifFrame, 0.35, {Position = udim2(0, 0, 0, 25)}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
-				tw(itemHolder, 0.35, {Size = udim2(1, 0, 0, 0)}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+				task.delay(0.1, function()
+					tw(itemHolder, 0.35, {Size = udim2(1, 0, 0, 0)}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+				end)
 
-				task.wait(0.35)
+				task.wait(0.5)
 				if particles then particles.destroy() end
 				itemHolder:Destroy()
 			end
