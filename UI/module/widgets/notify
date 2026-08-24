@@ -131,16 +131,10 @@ return function(ctx)
 			Position = udim2(0, 0, 0, 15),
 			BackgroundColor3 = rgb(10, 10, 12),
 			BackgroundTransparency = 1,
+			ClipsDescendants = true,
 			ZIndex = 3000002
 		}, itemHolder)
 		mk("UICorner", {CornerRadius = UDim.new(0, 8)}, notifFrame)
-
-		local stroke = mk("UIStroke", {
-			Color = rgb(35, 35, 45),
-			Thickness = 1,
-			Transparency = 1,
-			ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
-		}, notifFrame)
 
 		local particleContainer = mk("Frame", {
 			Size = udim2(1, 0, 1, 0),
@@ -190,7 +184,6 @@ return function(ctx)
 			BackgroundTransparency = 0
 		}, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-		tw(stroke, 0.25, {Transparency = 0})
 		tw(titleLabel, 0.25, {TextTransparency = 0})
 		tw(descLabel, 0.25, {TextTransparency = 0})
 
@@ -198,7 +191,6 @@ return function(ctx)
 			if notifFrame and notifFrame.Parent then
 				if particles then particles.setFade(0) end
 
-				tw(stroke, 0.2, {Transparency = 1})
 				tw(titleLabel, 0.2, {TextTransparency = 1})
 				tw(descLabel, 0.2, {TextTransparency = 1})
 
