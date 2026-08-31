@@ -134,7 +134,9 @@ return function(ctx)
 
 			local function populate(newOpts, newDef)
 				for _, item in ipairs(btnList) do
-					item.btn:Destroy()
+					if item.btn and item.btn.Parent then
+						item.btn:Destroy()
+					end
 				end
 				btnList = {}
 
@@ -215,7 +217,9 @@ return function(ctx)
 
 			local function populate(newOpts, newDef)
 				for _, item in ipairs(btnList) do
-					item.btn:Destroy()
+					if item.btn and item.btn.Parent then
+						item.btn:Destroy()
+					end
 				end
 				btnList = {}
 				selectedMap = {}
