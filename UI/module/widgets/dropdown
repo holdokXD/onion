@@ -133,6 +133,7 @@ return function(ctx)
 			local dropdownObj = {}
 
 			local function populate(newOpts, newDef)
+				-- Чистим старые кнопки и предотвращаем утечку памяти
 				for _, item in ipairs(btnList) do
 					if item.btn and item.btn.Parent then
 						item.btn:Destroy()
