@@ -59,15 +59,15 @@ return function(ctx)
 		}, track)
 		mk("UICorner", {CornerRadius = UDim.new(1, 0)}, fill)
 
-		local function setVal(v)
+		local function setVal(v, noCb)
 			val = clamp(floor(v + 0.5), minVal, maxVal)
 			valInput.Text = tostring(val)
 			tw(fill, 0.08, {Size = udim2(clamp((val - minVal) / (maxVal - minVal), 0, 1), 0, 1, 0)})
-			if callback then callback(val) end
+			if callback and not noCb then callback(val) end
 		end
 
 		local function updateSlider(inp)
-			setVal(minVal + (maxVal - minVal) * clamp((inp.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1))
+			setVal(minVal + (maxVal - minVal) * clamp((inp.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1), false)
 		end
 
 		trackArea.InputBegan:Connect(function(inp)
@@ -89,7 +89,9 @@ return function(ctx)
 			end
 		end)
 
-		valInput.FocusLost:Connect(function() setVal(tonumber(valInput.Text) or val) end)
+		valInput.FocusLost:Connect(function() setVal(tonumber(valInput.Text) or val, false) end)
+
+		return setVal
 	end
 
 	return {
@@ -109,9 +111,11 @@ return function(ctx)
 			end
 
 			local frame, _, setHover = makeBox(parent, udim2(1, -10, 0, 48))
-			createSliderCore(frame, textData, mn, mx, def, cb, -70, 50)
+			local setFn = createSliderCore(frame, textData, mn, mx, def, cb, -70, 50)
 			frame.MouseEnter:Connect(function() setHover(true) end)
 			frame.MouseLeave:Connect(function() setHover(false) end)
+
+			return { Set = function(v) setFn(v, true) end }
 		end,
 
 		AddDualSlider = function(parent, text1, min1, max1, def1, cb1, text2, min2, max2, def2, cb2)
@@ -136,14 +140,16 @@ return function(ctx)
 			end
 
 			local f1, _, h1 = makeBox(rowFrame, udim2(0.5, -4, 1, 0), udim2(0, 0, 0, 0), vec2(0, 0))
-			createSliderCore(f1, t1Data, mn1, mx1, df1, c1, -45, 35)
+			local set1 = createSliderCore(f1, t1Data, mn1, mx1, df1, c1, -45, 35)
 			f1.MouseEnter:Connect(function() h1(true) end)
 			f1.MouseLeave:Connect(function() h1(false) end)
 
 			local f2, _, h2 = makeBox(rowFrame, udim2(0.5, -4, 1, 0), udim2(1, 0, 0, 0), vec2(1, 0))
-			createSliderCore(f2, t2Data, mn2, mx2, df2, c2, -45, 35)
+			local set2 = createSliderCore(f2, t2Data, mn2, mx2, df2, c2, -45, 35)
 			f2.MouseEnter:Connect(function() h2(true) end)
 			f2.MouseLeave:Connect(function() h2(false) end)
+
+			return { Set1 = function(v) set1(v, true) end, Set2 = function(v) set2(v, true) end }
 		end
 	}
 end
