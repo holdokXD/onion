@@ -52,7 +52,7 @@ return function(ctx)
 			TextSize = 15,
 			Font = Enum.Font.GothamBold,
 			AutoButtonColor = false,
-			Modal = false,
+			Modal = true,
 			LayoutOrder = order or 1,
 			ZIndex = 1000005
 		}, parent)
@@ -76,7 +76,7 @@ return function(ctx)
 
 	function Module.CreateAuthMenu(parent, config)
 		config = config or {}
-		local correctPassword = config.password or ""
+		local correctPassword = config.password or "1234"
 		local currentLang = config.defaultLang or "EN"
 		
 		local langTexts = defaultLangTexts
@@ -194,33 +194,6 @@ return function(ctx)
 		local submitBtn = createButton(langTexts[currentLang].submit, rgb(25, 175, 100), passContainer, 2)
 		local backBtn   = createButton(langTexts[currentLang].back, rgb(60, 60, 75), passContainer, 3)
 
-		local loadContainer = mk("Frame", {
-			Size = udim2(1, 0, 0, 200),
-			AnchorPoint = vec2(0.5, 0),
-			Position = udim2(0.5, 0, 0, 120),
-			BackgroundTransparency = 1,
-			ZIndex = 1000005,
-			Visible = false
-		}, card)
-
-		local barBg = mk("Frame", {
-			Size = udim2(0, 220, 0, 8),
-			AnchorPoint = vec2(0.5, 0.5),
-			Position = udim2(0.5, 0, 0.5, 0),
-			BackgroundColor3 = rgb(25, 25, 32),
-			BackgroundTransparency = 0,
-			ZIndex = 1000006
-		}, loadContainer)
-		mk("UICorner", { CornerRadius = UDim.new(0, 4) }, barBg)
-
-		local barFill = mk("Frame", {
-			Size = udim2(0, 0, 1, 0),
-			BackgroundColor3 = rgb(25, 175, 100),
-			BackgroundTransparency = 0,
-			ZIndex = 1000007
-		}, barBg)
-		mk("UICorner", { CornerRadius = UDim.new(0, 4) }, barFill)
-
 		bindHoverEffect(startBtn, rgb(25, 175, 100), rgb(30, 200, 115))
 		bindHoverEffect(leaveBtn, rgb(215, 35, 55), rgb(245, 45, 65))
 		bindHoverEffect(langBtn,  rgb(60, 60, 75), rgb(80, 80, 95))
@@ -263,26 +236,6 @@ return function(ctx)
 			backBtn.Text = t.back
 		end
 
-		local function startLoadingProcess()
-			passContainer.Visible = false
-			mainContainer.Visible = false
-			loadContainer.Visible = true
-
-			changeSubTitle(langTexts[currentLang].loading)
-
-			tw(barFill, 1.2, { Size = udim2(1, 0, 1, 0) }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out).Completed:Connect(function()
-				changeSubTitle(langTexts[currentLang].complete, rgb(25, 175, 100))
-				task.wait(0.4)
-				tw(title, 0.3, { TextTransparency = 1 })
-				tw(subTitle, 0.3, { TextTransparency = 1 })
-				tw(barBg, 0.3, { BackgroundTransparency = 1 })
-				tw(barFill, 0.3, { BackgroundTransparency = 1 })
-				task.wait(0.35)
-				card:Destroy()
-				onSuccess(nil, currentLang, langTexts[currentLang])
-			end)
-		end
-
 		langBtn.MouseButton1Click:Connect(function()
 			if isTransitioning then return end
 			currentLang = (currentLang == "EN") and "RU" or "EN"
@@ -291,12 +244,6 @@ return function(ctx)
 
 		startBtn.MouseButton1Click:Connect(function()
 			if isTransitioning then return end
-			if correctPassword == "" then
-				isTransitioning = true
-				startLoadingProcess()
-				return
-			end
-
 			isTransitioning = true
 
 			tw(startBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
@@ -350,7 +297,13 @@ return function(ctx)
 			if isTransitioning then return end
 			if passInput.Text == correctPassword then
 				isTransitioning = true
-				startLoadingProcess()
+				tw(title, 0.25, { TextTransparency = 1 })
+				tw(subTitle, 0.25, { TextTransparency = 1 })
+				tw(passInput, 0.25, { BackgroundTransparency = 1, TextTransparency = 1, PlaceholderColor3 = rgb(0, 0, 0) })
+				tw(submitBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 })
+				tw(backBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 })
+				task.wait(0.25)
+				onSuccess(card, currentLang, langTexts[currentLang])
 			else
 				changeSubTitle(langTexts[currentLang].subErr, rgb(255, 70, 70))
 				tw(passInput, 0.06, { Position = udim2(0, 8, 0, 0) }).Completed:Connect(function()
