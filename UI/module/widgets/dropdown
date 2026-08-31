@@ -16,31 +16,79 @@ return function(ctx)
 		local valLabel = mk("TextLabel", {Size = udim2(0.6, -25, 1, 0), Position = udim2(0.4, 0, 0, 0), BackgroundTransparency = 1, Text = initialText, TextColor3 = rgb(160, 160, 175), TextSize = 11, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 2000008}, header)
 		local arrow = mk("TextLabel", {Size = udim2(0, 20, 1, 0), Position = udim2(1, -22, 0, 0), BackgroundTransparency = 1, Text = "v", TextColor3 = rgb(160, 160, 175), TextSize = 10, Font = Enum.Font.GothamBold, ZIndex = 2000008}, header)
 
-		local dropBody = mk("Frame", {Size = udim2(1, -16, 0, 140), Position = udim2(0, 8, 0, 38), BackgroundTransparency = 1, ZIndex = 2000008}, frame)
-		local searchBox = mk("TextBox", {
-			Size = udim2(1, 0, 0, 24), Position = udim2(0, 0, 0, 0),
-			BackgroundColor3 = rgb(25, 25, 30), BackgroundTransparency = 0.5, Text = "",
-			PlaceholderText = getText(searchPlaceholders, ctx.currentLang),
-			TextColor3 = rgb(220, 220, 230), PlaceholderColor3 = rgb(120, 120, 135),
-			TextSize = 13, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false, ZIndex = 2000009
-		}, dropBody)
-		mk("UICorner", {CornerRadius = UDim.new(0, 6)}, searchBox)
-		mk("UIStroke", {Color = rgb(45, 45, 55), Thickness = 1}, searchBox)
-		mk("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8)}, searchBox)
+		local dropBody = mk("Frame", {Size = udim2(1, -16, 0, 100), Position = udim2(0, 8, 0, 38), BackgroundTransparency = 1, ZIndex = 2000008}, frame)
 
-		local scroll = mk("ScrollingFrame", {Size = udim2(1, 0, 1, -30), Position = udim2(0, 0, 0, 30), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 0, CanvasSize = udim2(0, 0, 0, 0), ZIndex = 2000009}, dropBody)
+		local searchContainer = mk("Frame", {
+			Size = udim2(1, 0, 0, 26),
+			Position = udim2(0, 0, 0, 0),
+			BackgroundColor3 = rgb(25, 25, 32),
+			BackgroundTransparency = 0.5,
+			ZIndex = 2000009
+		}, dropBody)
+		mk("UICorner", {CornerRadius = UDim.new(0, 6)}, searchContainer)
+		local searchStroke = mk("UIStroke", {Color = rgb(45, 45, 58), Thickness = 1}, searchContainer)
+
+		local searchBox = mk("TextBox", {
+			Size = udim2(1, -12, 1, 0),
+			Position = udim2(0, 6, 0, 0),
+			BackgroundTransparency = 1,
+			Text = "",
+			PlaceholderText = getText(searchPlaceholders, ctx.currentLang),
+			PlaceholderColor3 = rgb(110, 110, 125),
+			TextColor3 = rgb(240, 240, 245),
+			TextSize = 12,
+			Font = Enum.Font.Gotham,
+			ClearTextOnFocus = false,
+			TextEditable = true,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			ZIndex = 2000010
+		}, searchContainer)
+
+		searchBox.Focused:Connect(function()
+			tw(searchStroke, 0.2, {Color = rgb(90, 90, 120)})
+		end)
+
+		searchBox.FocusLost:Connect(function()
+			tw(searchStroke, 0.2, {Color = rgb(45, 45, 58)})
+		end)
+
+		local scroll = mk("ScrollingFrame", {Size = udim2(1, 0, 1, -32), Position = udim2(0, 0, 0, 32), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 0, CanvasSize = udim2(0, 0, 0, 0), ZIndex = 2000009}, dropBody)
 		local layout = mk("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 3)}, scroll)
+
+		local targetHeight = 0
+		local hasItems = false
 
 		local function updateCanvas()
 			scroll.CanvasSize = udim2(0, 0, 0, layout.AbsoluteContentSize.Y + 2)
 		end
 		layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
 
+		local function updateHeight(itemCount)
+			hasItems = itemCount > 0
+			if itemCount <= 0 then
+				targetHeight = 0
+				if open then
+					open = false
+					tw(arrow, 0.25, {Rotation = 0})
+					tw(frame, 0.25, {Size = udim2(1, -10, 0, 38)})
+				end
+				return
+			end
+
+			local listH = math.min(itemCount * 27, 108)
+			targetHeight = 32 + listH + 6
+			dropBody.Size = udim2(1, -16, 0, targetHeight)
+
+			if open then
+				tw(frame, 0.25, {Size = udim2(1, -10, 0, 38 + targetHeight + 6)})
+			end
+		end
+
 		header.MouseButton1Click:Connect(function()
-			if ctx.isClosing() then return end
+			if ctx.isClosing() or not hasItems then return end
 			open = not open
 			tw(arrow, 0.25, {Rotation = open and 180 or 0})
-			tw(frame, 0.25, {Size = udim2(1, -10, 0, open and 184 or 38)})
+			tw(frame, 0.25, {Size = udim2(1, -10, 0, open and (38 + targetHeight + 6) or 38)})
 		end)
 
 		header.MouseEnter:Connect(function() setHover(true) end)
@@ -53,7 +101,7 @@ return function(ctx)
 				itemData.btn.Visible = (query == "" or string.find(optText, query, 1, true) ~= nil)
 			end
 			updateCanvas()
-		end
+		end, updateHeight
 	end
 
 	return {
@@ -73,7 +121,7 @@ return function(ctx)
 			local selectedOpt = defOpt or opts[1] or ""
 			local selectedText = getText(selectedOpt, ctx.currentLang)
 
-			local _, _, valLabel, searchBox, scroll, filterOptions = buildDropdownContainer(parent, textData, selectedText)
+			local _, _, valLabel, searchBox, scroll, filterOptions, updateHeight = buildDropdownContainer(parent, textData, selectedText)
 			local btnList = {}
 
 			local function updateBtnStyle(optRaw, btn)
@@ -82,25 +130,48 @@ return function(ctx)
 				tw(btn, 0.12, {TextColor3 = isSel and rgb(255, 255, 255) or rgb(140, 140, 155)})
 			end
 
-			for i, opt in ipairs(opts) do
-				local dispText = getText(opt, ctx.currentLang)
-				local btn = mk("TextButton", {Size = udim2(1, 0, 0, 24), Text = "  " .. dispText, TextSize = 11, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, AutoButtonColor = false, LayoutOrder = i, ZIndex = 2000009}, scroll)
-				mk("UICorner", {CornerRadius = UDim.new(0, 6)}, btn)
+			local dropdownObj = {}
 
-				table.insert(btnList, { opt = opt, btn = btn, dispText = dispText })
-				updateBtnStyle(opt, btn)
+			local function populate(newOpts, newDef)
+				for _, item in ipairs(btnList) do
+					item.btn:Destroy()
+				end
+				btnList = {}
 
-				btn.MouseButton1Click:Connect(function()
-					if ctx.isClosing() then return end
-					selectedOpt = opt
-					selectedText = dispText
-					valLabel.Text = selectedText
-					for _, item in ipairs(btnList) do updateBtnStyle(item.opt, item.btn) end
-					if cb then cb(dispText) end
-				end)
+				opts = newOpts or {}
+				selectedOpt = newDef or opts[1] or ""
+				selectedText = (selectedOpt and selectedOpt ~= "") and getText(selectedOpt, ctx.currentLang) or getText(noneText, ctx.currentLang)
+				valLabel.Text = selectedText
+
+				for i, opt in ipairs(opts) do
+					local dispText = getText(opt, ctx.currentLang)
+					local btn = mk("TextButton", {Size = udim2(1, 0, 0, 24), Text = "  " .. dispText, TextSize = 11, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, AutoButtonColor = false, LayoutOrder = i, ZIndex = 2000009}, scroll)
+					mk("UICorner", {CornerRadius = UDim.new(0, 6)}, btn)
+
+					table.insert(btnList, { opt = opt, btn = btn, dispText = dispText })
+					updateBtnStyle(opt, btn)
+
+					btn.MouseButton1Click:Connect(function()
+						if ctx.isClosing() then return end
+						selectedOpt = opt
+						selectedText = dispText
+						valLabel.Text = selectedText
+						for _, item in ipairs(btnList) do updateBtnStyle(item.opt, item.btn) end
+						if cb then cb(dispText) end
+					end)
+				end
+
+				updateHeight(#opts)
 			end
 
+			populate(opts, selectedOpt)
 			searchBox:GetPropertyChangedSignal("Text"):Connect(function() filterOptions(searchBox.Text, btnList) end)
+
+			function dropdownObj:Refresh(newOpts, newDef)
+				populate(newOpts, newDef)
+			end
+
+			return dropdownObj
 		end,
 
 		AddMultiDropdown = function(parent, config, options, defaultSelected, callback)
@@ -117,14 +188,7 @@ return function(ctx)
 			end
 
 			local selectedMap = {}
-			if type(defSel) == "table" then
-				for _, v in ipairs(defSel) do
-					local strVal = getText(v, ctx.currentLang)
-					selectedMap[strVal] = true
-				end
-			end
-
-			local _, _, valLabel, searchBox, scroll, filterOptions = buildDropdownContainer(parent, textData, "")
+			local _, _, valLabel, searchBox, scroll, filterOptions, updateHeight = buildDropdownContainer(parent, textData, "")
 			local btnList = {}
 
 			local function getSelectedList()
@@ -147,25 +211,52 @@ return function(ctx)
 				tw(btn, 0.12, {TextColor3 = active and rgb(255, 255, 255) or rgb(140, 140, 155)})
 			end
 
-			for i, opt in ipairs(opts) do
-				local dispText = getText(opt, ctx.currentLang)
-				local btn = mk("TextButton", {Size = udim2(1, 0, 0, 24), TextSize = 11, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, AutoButtonColor = false, LayoutOrder = i, ZIndex = 2000009}, scroll)
-				mk("UICorner", {CornerRadius = UDim.new(0, 6)}, btn)
+			local dropdownObj = {}
 
-				table.insert(btnList, { opt = opt, btn = btn, dispText = dispText })
-				updateBtnStyle(dispText, btn)
+			local function populate(newOpts, newDef)
+				for _, item in ipairs(btnList) do
+					item.btn:Destroy()
+				end
+				btnList = {}
+				selectedMap = {}
 
-				btn.MouseButton1Click:Connect(function()
-					if ctx.isClosing() then return end
-					selectedMap[dispText] = not selectedMap[dispText]
+				opts = newOpts or {}
+				if type(newDef) == "table" then
+					for _, v in ipairs(newDef) do
+						local strVal = getText(v, ctx.currentLang)
+						selectedMap[strVal] = true
+					end
+				end
+
+				for i, opt in ipairs(opts) do
+					local dispText = getText(opt, ctx.currentLang)
+					local btn = mk("TextButton", {Size = udim2(1, 0, 0, 24), TextSize = 11, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, AutoButtonColor = false, LayoutOrder = i, ZIndex = 2000009}, scroll)
+					mk("UICorner", {CornerRadius = UDim.new(0, 6)}, btn)
+
+					table.insert(btnList, { opt = opt, btn = btn, dispText = dispText })
 					updateBtnStyle(dispText, btn)
-					updateText()
-					if cb then cb(getSelectedList()) end
-				end)
+
+					btn.MouseButton1Click:Connect(function()
+						if ctx.isClosing() then return end
+						selectedMap[dispText] = not selectedMap[dispText]
+						updateBtnStyle(dispText, btn)
+						updateText()
+						if cb then cb(getSelectedList()) end
+					end)
+				end
+
+				updateText()
+				updateHeight(#opts)
 			end
 
-			updateText()
+			populate(opts, defSel)
 			searchBox:GetPropertyChangedSignal("Text"):Connect(function() filterOptions(searchBox.Text, btnList) end)
+
+			function dropdownObj:Refresh(newOpts, newDef)
+				populate(newOpts, newDef)
+			end
+
+			return dropdownObj
 		end
 	}
 end
