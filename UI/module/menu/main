@@ -1,0 +1,432 @@
+return function(ctx)
+	local mk, tw, udim2, vec2, rgb = ctx.mk, ctx.tw, ctx.udim2, ctx.vec2, ctx.rgb
+	local UIS, gui, Players = ctx.UIS, ctx.gui, game:GetService("Players")
+	local player = Players.LocalPlayer
+
+	local function getExecutor()
+		if identifyexecutor then return identifyexecutor() end
+		if getexecutorname then return getexecutorname() end
+		if DELTA_LOADED then return "Delta" end
+		if KRNL_LOADED then return "KRNL" end
+		if WRD_LOADED then return "WeAreDevs" end
+		if isfolder and makefolder then return "Exec" end
+		return "Unknown"
+	end
+
+	local function formatTime(s)
+		if s < 60 then return tostring(s) .. "s" end
+		if s < 3600 then return string.format("%dm %ds", math.floor(s / 60), s % 60) end
+		return string.format("%dh %dm", math.floor(s / 3600), math.floor((s % 3600) / 60))
+	end
+
+	local function utf8Lower(str)
+		str = tostring(str or "")
+		local result = {}
+		for _, code in utf8.codes(str) do
+			if code >= 1040 and code <= 1071 then
+				code = code + 32
+			elseif code == 1025 then
+				code = 1105
+			elseif code >= 65 and code <= 90 then
+				code = code + 32
+			end
+			table.insert(result, utf8.char(code))
+		end
+		return table.concat(result)
+	end
+
+	return {
+		Init = function(modules, currentLang)
+			ctx.currentLang = currentLang or "EN"
+			local Btns = modules.button or {}
+			local Toggles = modules.toggle or {}
+			local Sliders = modules.slider or {}
+			local Dropdowns = modules.dropdown or {}
+			local ColorPickers = modules.colorpicker or {}
+			local Inputs = modules.input or {}
+			local Labels = modules.label or {}
+			local NotifyModule = modules.notify or {}
+
+			ctx.Notify = function(cfg)
+				if NotifyModule.Notify then
+					NotifyModule.Notify(cfg)
+				end
+			end
+
+			local windowContainer = mk("Frame", {Size = udim2(0, 0, 0, 0), AnchorPoint = vec2(0.5, 0.5), Position = udim2(0.5, 0, 0.5, 0), BackgroundColor3 = rgb(10, 10, 12), ClipsDescendants = true, ZIndex = 2000000}, gui)
+			mk("UICorner", {CornerRadius = UDim.new(0, 12)}, windowContainer)
+			mk("UIStroke", {Color = rgb(35, 35, 45), Thickness = 1}, windowContainer)
+
+			local solidBg = mk("Frame", {Size = udim2(1, 0, 1, 0), BackgroundColor3 = rgb(10, 10, 12), ZIndex = 2000000}, windowContainer)
+			mk("UICorner", {CornerRadius = UDim.new(0, 12)}, solidBg)
+
+			local particlesFrame = mk("Frame", {Size = udim2(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 2000001, ClipsDescendants = true, Active = false}, windowContainer)
+			local menuParticles = ctx.attachParticles and ctx.attachParticles(particlesFrame, 2000001) or nil
+
+			local innerContent = mk("Frame", {Size = udim2(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 2000002, Active = false}, windowContainer)
+			local windowHeader = mk("Frame", {Size = udim2(1, 0, 0, 42), BackgroundTransparency = 1, ZIndex = 2000005}, innerContent)
+			mk("TextLabel", {Size = udim2(0, 130, 1, 0), Position = udim2(0, 16, 0, 0), BackgroundTransparency = 1, Text = ctx.getText({ru = "ПАНЕЛЬ УПРАВЛЕНИЯ", en = "CONTROL PANEL"}, currentLang), TextColor3 = rgb(240, 240, 245), TextSize = 13, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2000006}, windowHeader)
+
+			local searchContainer = mk("Frame", {Size = udim2(0, 130, 0, 24), Position = udim2(1, -205, 0.5, 0), AnchorPoint = vec2(0, 0.5), BackgroundColor3 = rgb(16, 16, 20), BackgroundTransparency = 0.5, ZIndex = 2000006}, windowHeader)
+			mk("UICorner", {CornerRadius = UDim.new(0, 6)}, searchContainer)
+			local searchStroke = mk("UIStroke", {Color = rgb(35, 35, 45), Thickness = 1}, searchContainer)
+
+			local searchPlaceholder = (currentLang == "RU") and "Поиск..." or "Search..."
+			local searchBox = mk("TextBox", {Size = udim2(1, -10, 1, 0), Position = udim2(0, 5, 0, 0), BackgroundTransparency = 1, Text = "", PlaceholderText = searchPlaceholder, PlaceholderColor3 = rgb(120, 120, 135), TextColor3 = rgb(240, 240, 245), TextSize = 11, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false, TextEditable = true, Active = true, ZIndex = 2000010}, searchContainer)
+
+			searchBox.Focused:Connect(function()
+				tw(searchStroke, 0.2, {Color = rgb(90, 90, 120)})
+			end)
+
+			searchBox.FocusLost:Connect(function()
+				tw(searchStroke, 0.2, {Color = rgb(35, 35, 45)})
+			end)
+
+			local minimizeBtn = mk("TextButton", {Size = udim2(0, 28, 0, 28), AnchorPoint = vec2(1, 0.5), Position = udim2(1, -44, 0.5, 0), BackgroundTransparency = 1, Text = "—", TextColor3 = rgb(200, 200, 215), TextSize = 14, Font = Enum.Font.ArialBold, AutoButtonColor = false, ZIndex = 2000010}, windowHeader)
+			local closeBtn = mk("TextButton", {Size = udim2(0, 28, 0, 28), AnchorPoint = vec2(1, 0.5), Position = udim2(1, -12, 0.5, 0), BackgroundTransparency = 1, Text = "X", TextColor3 = rgb(200, 200, 215), TextSize = 14, Font = Enum.Font.ArialBold, AutoButtonColor = false, ZIndex = 2000010}, windowHeader)
+
+			local restoreBar = mk("TextButton", {Size = udim2(0, 80, 0, 6), AnchorPoint = vec2(0.5, 1), Position = udim2(0.5, 0, 1, 20), BackgroundColor3 = rgb(45, 45, 60), Text = "", AutoButtonColor = false, Visible = false, ZIndex = 2000020}, gui)
+			mk("UICorner", {CornerRadius = UDim.new(1, 0)}, restoreBar)
+			mk("UIStroke", {Color = rgb(80, 80, 100), Thickness = 1}, restoreBar)
+
+			restoreBar.MouseEnter:Connect(function() tw(restoreBar, 0.2, {BackgroundColor3 = rgb(80, 80, 110), Size = udim2(0, 100, 0, 8)}) end)
+			restoreBar.MouseLeave:Connect(function() tw(restoreBar, 0.2, {BackgroundColor3 = rgb(45, 45, 60), Size = udim2(0, 80, 0, 6)}) end)
+
+			local sidebar = mk("Frame", {Size = udim2(0, 130, 1, -42), Position = udim2(0, 0, 0, 42), BackgroundTransparency = 1, ZIndex = 2000005}, innerContent)
+			local tabIndicator = mk("Frame", {Size = udim2(0, 114, 0, 34), Position = udim2(0.5, 0, 0, 6), AnchorPoint = vec2(0.5, 0), BackgroundColor3 = rgb(18, 18, 22), BackgroundTransparency = 0.5, ZIndex = 2000002}, sidebar)
+			mk("UICorner", {CornerRadius = UDim.new(0, 8)}, tabIndicator)
+			mk("UIStroke", {Color = rgb(45, 45, 60), Thickness = 1}, tabIndicator)
+
+			local sidebarList = mk("Frame", {Size = udim2(1, 0, 1, -50), BackgroundTransparency = 1, ZIndex = 2000007}, sidebar)
+			mk("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center}, sidebarList)
+			mk("UIPadding", {PaddingTop = UDim.new(0, 6)}, sidebarList)
+
+			local userProfileFrame = mk("Frame", {Size = udim2(1, -12, 0, 32), Position = udim2(0, 6, 1, -8), AnchorPoint = vec2(0, 1), BackgroundTransparency = 1, ZIndex = 2000007}, sidebar)
+			local avatarImg = mk("ImageLabel", {Size = udim2(0, 28, 0, 28), Position = udim2(0, 0, 0.5, 0), AnchorPoint = vec2(0, 0.5), BackgroundTransparency = 1, Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100), ZIndex = 2000008}, userProfileFrame)
+			mk("UICorner", {CornerRadius = UDim.new(1, 0)}, avatarImg)
+
+			local nameLabel = mk("TextLabel", {Size = udim2(1, -32, 0, 15), Position = udim2(0, 32, 0, 3), BackgroundTransparency = 1, Text = player.DisplayName, TextColor3 = rgb(240, 240, 245), TextSize = 12, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 2000008}, userProfileFrame)
+			local subInfoLabel = mk("TextLabel", {Size = udim2(1, -32, 0, 14), Position = udim2(0, 32, 0, 16), BackgroundTransparency = 1, Text = getExecutor() .. " | 0s | v1.0.0", TextColor3 = rgb(110, 110, 125), TextSize = 9, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2000008}, userProfileFrame)
+
+			local startTime = os.time()
+			task.spawn(function()
+				while gui and gui.Parent do
+					subInfoLabel.Text = getExecutor() .. " | " .. formatTime(os.time() - startTime) .. " | v1.0.0"
+					task.wait(1)
+				end
+			end)
+
+			local contentArea = mk("Frame", {Size = udim2(1, -140, 1, -48), Position = udim2(0, 135, 0, 42), BackgroundTransparency = 1, ZIndex = 2000005, ClipsDescendants = false, Active = false}, innerContent)
+
+			local dragging, dragInput, dragStart, startPos
+			windowHeader.InputBegan:Connect(function(input)
+				if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not ctx.getActiveSliderInput() then
+					dragging, dragStart, startPos = true, input.Position, windowContainer.Position
+					input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+				end
+			end)
+			windowHeader.InputChanged:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+			end)
+			UIS.InputChanged:Connect(function(input)
+				if input == dragInput and dragging then
+					local delta = input.Position - dragStart
+					windowContainer.Position = udim2(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+				end
+			end)
+
+			local tabButtons, tabFrames, activeTab, tabCount, sectionsData = {}, {}, nil, 0, {}
+
+			local function getSubElements(container)
+				local subElems = {}
+				for _, child in ipairs(container:GetChildren()) do
+					if child:IsA("GuiObject") and child.Name ~= "UIListLayout" and child.Name ~= "UIPadding" and child.Name ~= "UICorner" and child.Name ~= "UIStroke" then
+						table.insert(subElems, child)
+					end
+				end
+				return subElems
+			end
+
+			searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+				local query = utf8Lower(searchBox.Text):match("^%s*(.-)%s*$")
+				
+				for _, sec in ipairs(sectionsData) do
+					if query == "" then
+						sec.label.Visible = true
+						for _, item in ipairs(sec.items) do
+							item.object.Visible = true
+							if item.isDual and #item.subElements >= 2 then
+								item.subElements[1].Visible = true
+								item.subElements[1].Size = udim2(0.5, -4, 1, 0)
+								item.subElements[2].Visible = true
+								item.subElements[2].Size = udim2(0.5, -4, 1, 0)
+							end
+						end
+					else
+						local secText = (currentLang == "RU") and sec.textRu or sec.textEn
+						local secMatches = string.find(secText, query, 1, true) ~= nil
+						local hasVisibleChild = false
+
+						for _, item in ipairs(sec.items) do
+							if item.isDual then
+								local match1 = string.find((currentLang == "RU") and item.sub1Ru or item.sub1En, query, 1, true) ~= nil
+								local match2 = string.find((currentLang == "RU") and item.sub2Ru or item.sub2En, query, 1, true) ~= nil
+
+								if secMatches or (match1 and match2) then
+									item.object.Visible = true
+									if #item.subElements >= 2 then
+										item.subElements[1].Visible = true
+										item.subElements[1].Size = udim2(0.5, -4, 1, 0)
+										item.subElements[2].Visible = true
+										item.subElements[2].Size = udim2(0.5, -4, 1, 0)
+									end
+									hasVisibleChild = true
+								elseif match1 then
+									item.object.Visible = true
+									if #item.subElements >= 2 then
+										item.subElements[1].Visible = true
+										item.subElements[1].Size = udim2(1, 0, 1, 0)
+										item.subElements[2].Visible = false
+									end
+									hasVisibleChild = true
+								elseif match2 then
+									item.object.Visible = true
+									if #item.subElements >= 2 then
+										item.subElements[1].Visible = false
+										item.subElements[2].Visible = true
+										item.subElements[2].Size = udim2(1, 0, 1, 0)
+									end
+									hasVisibleChild = true
+								else
+									item.object.Visible = false
+								end
+							else
+								local itemText = (currentLang == "RU") and item.textRu or item.textEn
+								if secMatches or string.find(itemText, query, 1, true) then
+									item.object.Visible = true
+									hasVisibleChild = true
+								else
+									item.object.Visible = false
+								end
+							end
+						end
+
+						sec.label.Visible = secMatches or hasVisibleChild
+					end
+				end
+			end)
+
+			local function AddTab(tabNameData)
+				tabCount = tabCount + 1
+				local tabIdx = tabCount
+
+				local tabBtn = mk("TextButton", {Size = udim2(0, 114, 0, 34), BackgroundTransparency = 1, Text = ctx.getText(tabNameData, ctx.currentLang), TextColor3 = rgb(110, 110, 125), TextSize = 13, Font = Enum.Font.GothamMedium, AutoButtonColor = false, LayoutOrder = tabIdx, ZIndex = 2000008}, sidebarList)
+				local page = mk("Frame", {Size = udim2(1, 0, 1, 0), BackgroundTransparency = 1, Visible = false, ZIndex = 2000006, Active = false}, contentArea)
+				
+				local subTabBar = mk("Frame", {Size = udim2(1, -220, 0, 24), Position = udim2(0, 15, 0, -33), BackgroundTransparency = 1, Visible = false, ClipsDescendants = true, ZIndex = 2000007}, page)
+				local subTabList = mk("ScrollingFrame", {Size = udim2(1, 0, 1, 0), BackgroundTransparency = 1, ScrollBarThickness = 0, CanvasSize = udim2(0, 0, 0, 0), ScrollingDirection = Enum.ScrollingDirection.X, ElasticBehavior = Enum.ElasticBehavior.WhenScrollable, Active = true, Selectable = false, ClipsDescendants = true, ZIndex = 2000007}, subTabBar)
+				local subTabListLayout = mk("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 12), FillDirection = Enum.FillDirection.Horizontal, HorizontalAlignment = Enum.HorizontalAlignment.Left, VerticalAlignment = Enum.VerticalAlignment.Center}, subTabList)
+
+				subTabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+					subTabList.CanvasSize = udim2(0, subTabListLayout.AbsoluteContentSize.X + 8, 0, 0)
+				end)
+
+				subTabBar.InputChanged:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseWheel then
+						local currentScroll = subTabList.CanvasPosition.X
+						local scrollDelta = input.Position.Z * 30
+						subTabList.CanvasPosition = vec2(math.clamp(currentScroll - scrollDelta, 0, math.max(0, subTabList.CanvasSize.X.Offset - subTabBar.AbsoluteSize.X)), 0)
+					end
+				end)
+
+				local subTabs, activeSubTab, subTabCount = {}, nil, 0
+				local defaultSubTab = nil
+
+				tabButtons[tabIdx], tabFrames[tabIdx] = tabBtn, page
+
+				tabBtn.MouseButton1Click:Connect(function()
+					if activeTab == tabIdx or ctx.isClosing() then return end
+					activeTab = tabIdx
+
+					tw(tabIndicator, 0.3, {Position = udim2(0.5, 0, 0, 6 + (tabIdx - 1) * 40)})
+					for idx, b in pairs(tabButtons) do
+						local isActive = (idx == tabIdx)
+						tw(b, 0.25, {TextColor3 = isActive and rgb(255, 255, 255) or rgb(110, 110, 125)})
+						local f = tabFrames[idx]
+						if isActive then
+							f.Visible, f.Position = true, udim2(0, 0, 0, 8)
+							tw(f, 0.35, {Position = udim2(0, 0, 0, 0)})
+						else
+							f.Visible = false
+						end
+					end
+				end)
+
+				if not activeTab then
+					activeTab, page.Visible, page.Position, tabBtn.TextColor3, tabIndicator.Position = tabIdx, true, udim2(0, 0, 0, 0), rgb(255, 255, 255), udim2(0.5, 0, 0, 6)
+				end
+
+				local function AddSubTab(_, subTabNameData)
+					subTabCount = subTabCount + 1
+					local subIdx = subTabCount
+					subTabBar.Visible = true
+
+					local subBtn = mk("TextButton", {Size = udim2(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 1, Text = ctx.getText(subTabNameData, ctx.currentLang), TextColor3 = rgb(110, 110, 125), TextSize = 12, Font = Enum.Font.GothamBold, AutoButtonColor = false, LayoutOrder = subIdx, ZIndex = 2000008}, subTabList)
+					
+					local scroll = mk("ScrollingFrame", {Size = udim2(1, 0, 1, 0), Position = udim2(0, 0, 0, 0), BackgroundTransparency = 1, ScrollBarThickness = 0, CanvasSize = udim2(0, 0, 0, 0), Visible = false, ZIndex = 2000006, Active = false, Selectable = false}, page)
+					mk("UIPadding", {PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 8)}, scroll)
+
+					local layout = mk("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center}, scroll)
+					layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() scroll.CanvasSize = udim2(0, 0, 0, layout.AbsoluteContentSize.Y + 16) end)
+
+					local subObj = {btn = subBtn, scroll = scroll}
+					subTabs[subIdx] = subObj
+
+					subBtn.MouseButton1Click:Connect(function()
+						if activeSubTab == subIdx or ctx.isClosing() then return end
+						activeSubTab = subIdx
+						for sIdx, st in pairs(subTabs) do
+							local isActive = (sIdx == subIdx)
+							tw(st.btn, 0.2, {TextColor3 = isActive and rgb(255, 255, 255) or rgb(110, 110, 125)})
+							st.scroll.Visible = isActive
+						end
+					end)
+
+					if not activeSubTab then
+						activeSubTab = subIdx
+						subBtn.TextColor3 = rgb(255, 255, 255)
+						scroll.Visible = true
+					end
+
+					local subTabApi = {
+						scroll = scroll,
+						btn = subBtn,
+						AddSection = function(_, sectionTitle)
+							local secTxt = ctx.getText(sectionTitle, ctx.currentLang)
+							local lbl = mk("TextLabel", {Size = udim2(1, -10, 0, 22), BackgroundTransparency = 1, Text = string.upper(secTxt), TextColor3 = rgb(130, 130, 145), TextSize = 11, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2000007}, scroll)
+							
+							local secStruct = {
+								label = lbl,
+								textRu = utf8Lower(ctx.getText(sectionTitle, "RU")),
+								textEn = utf8Lower(ctx.getText(sectionTitle, "EN")),
+								items = {}
+							}
+							table.insert(sectionsData, secStruct)
+
+							local function wrapSingle(fn, title, ...)
+								if not fn then return end
+								local preCount = #scroll:GetChildren()
+								fn(scroll, title, ...)
+								local children = scroll:GetChildren()
+								if #children > preCount then
+									local created = children[#children]
+									table.insert(secStruct.items, {
+										object = created,
+										isDual = false,
+										textRu = utf8Lower(ctx.getText(title, "RU")),
+										textEn = utf8Lower(ctx.getText(title, "EN"))
+									})
+								end
+							end
+
+							local function wrapDual(fn, title1, cb1, title2, cb2, ...)
+								if not fn then return end
+								local preCount = #scroll:GetChildren()
+								fn(scroll, title1, cb1, title2, cb2, ...)
+								local children = scroll:GetChildren()
+								if #children > preCount then
+									local created = children[#children]
+									table.insert(secStruct.items, {
+										object = created,
+										isDual = true,
+										sub1Ru = utf8Lower(ctx.getText(title1, "RU")),
+										sub1En = utf8Lower(ctx.getText(title1, "EN")),
+										sub2Ru = utf8Lower(ctx.getText(title2, "RU")),
+										sub2En = utf8Lower(ctx.getText(title2, "EN")),
+										subElements = getSubElements(created)
+									})
+								end
+							end
+
+							return {
+								AddButton = function(_, t, cb) wrapSingle(Btns.AddBtn, t, cb) end,
+								AddDualButton = function(_, t1, cb1, t2, cb2) wrapDual(Btns.AddDualBtn, t1, cb1, t2, cb2) end,
+								AddToggle = function(_, t, def, cb) wrapSingle(Toggles.AddToggle, t, def, cb) end,
+								AddDualToggle = function(_, t1, d1, c1, t2, d2, c2) wrapDual(Toggles.AddDualToggle, t1, d1, c1, t2, d2, c2) end,
+								AddSlider = function(_, t, min, max, def, cb) wrapSingle(Sliders.AddSlider, t, min, max, def, cb) end,
+								AddDualSlider = function(_, t1, min1, max1, def1, cb1, t2, min2, max2, def2, cb2) wrapDual(Sliders.AddDualSlider, t1, min1, max1, def1, cb1, t2, min2, max2, def2, cb2) end,
+								AddDropdown = function(_, t, opt, def, cb) wrapSingle(Dropdowns.AddDropdown, t, opt, def, cb) end,
+								AddMultiDropdown = function(_, t, opt, def, cb) wrapSingle(Dropdowns.AddMultiDropdown, t, opt, def, cb) end,
+								AddColorPicker = function(_, t, def, cb) wrapSingle(ColorPickers.AddColorPicker, t, def, cb) end,
+								AddInput = function(_, t, p, d, cb) wrapSingle(Inputs.AddInput, t, p, d, cb) end,
+								AddLabel = function(_, t) wrapSingle(Labels.AddLabel, t) end
+							}
+						end
+					}
+
+					return subTabApi
+				end
+
+				local function getOrCreateDefaultSubTab()
+					if not defaultSubTab then
+						defaultSubTab = AddSubTab(nil, {ru = "", en = ""})
+						subTabBar.Visible = false
+						defaultSubTab.btn.Visible = false
+						defaultSubTab.scroll.Size = udim2(1, 0, 1, 0)
+						defaultSubTab.scroll.Position = udim2(0, 0, 0, 0)
+					end
+					return defaultSubTab
+				end
+
+				return {
+					AddSubTab = AddSubTab,
+					AddSection = function(_, sectionTitle)
+						if subTabCount > 0 and defaultSubTab == nil then
+							return subTabs[1]:AddSection(sectionTitle)
+						end
+						return getOrCreateDefaultSubTab():AddSection(sectionTitle)
+					end
+				}
+			end
+
+			tw(windowContainer, 0.35, {Size = udim2(0, 540, 0, 330)})
+
+			local lastSavedPos, isMinimized = udim2(0.5, 0, 0.5, 0), false
+
+			minimizeBtn.MouseButton1Click:Connect(function()
+				if ctx.isClosing() or isMinimized then return end
+				isMinimized, lastSavedPos = true, windowContainer.Position
+				tw(windowContainer, 0.35, {Size = udim2(0, 0, 0, 0), Position = udim2(0.5, 0, 1, 30)}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+				task.delay(0.2, function()
+					restoreBar.Visible = true
+					tw(restoreBar, 0.3, {Position = udim2(0.5, 0, 1, -12)}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+				end)
+			end)
+
+			restoreBar.MouseButton1Click:Connect(function()
+				if ctx.isClosing() or not isMinimized then return end
+				tw(restoreBar, 0.2, {Position = udim2(0.5, 0, 1, 20)}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+				task.delay(0.15, function()
+					restoreBar.Visible = false
+					tw(windowContainer, 0.35, {Size = udim2(0, 540, 0, 330), Position = lastSavedPos}, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+					isMinimized = false
+				end)
+			end)
+
+			closeBtn.MouseButton1Click:Connect(function()
+				if ctx.isClosing() then return end
+				ctx.setClosing(true)
+				if restoreBar then restoreBar:Destroy() end
+				tw(windowContainer, 0.25, {Size = udim2(0, 0, 0, 0)}, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+				task.wait(0.25)
+				if menuParticles then menuParticles.destroy() end
+				gui:Destroy()
+			end)
+
+			return {
+				AddTab = AddTab,
+				nameLabel = nameLabel
+			}
+		end
+	}
+end
