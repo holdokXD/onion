@@ -89,6 +89,20 @@ return function(ctx)
 				if cb then cb(color) end
 			end
 
+			local function setVisualColor(col)
+				color = col
+				h, s, v = color:ToHSV()
+				preview.BackgroundColor3 = color
+				satGradient.Color = ColorSequence.new(Color3.fromHSV(h, 0, v), Color3.fromHSV(h, 1, v))
+				valGradient.Color = ColorSequence.new(Color3.fromHSV(h, s, 0), Color3.fromHSV(h, s, 1))
+				rInput.Text = tostring(floor(color.R * 255))
+				gInput.Text = tostring(floor(color.G * 255))
+				bInput.Text = tostring(floor(color.B * 255))
+				tw(huePicker, 0.1, {Position = udim2(h, 0, 0.5, 0)})
+				tw(satPicker, 0.1, {Position = udim2(s, 0, 0.5, 0)})
+				tw(valPicker, 0.1, {Position = udim2(v, 0, 0.5, 0)})
+			end
+
 			local function attachSliderLogic(trackFrame, btnObj, pickerObj, setValueCallback)
 				local myInput = nil
 				local function proc(inp)
@@ -140,6 +154,8 @@ return function(ctx)
 
 			header.MouseEnter:Connect(function() setHover(true) end)
 			header.MouseLeave:Connect(function() setHover(false) end)
+
+			return { Set = setVisualColor }
 		end
 	}
 end
