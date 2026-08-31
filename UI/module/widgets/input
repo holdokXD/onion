@@ -57,6 +57,10 @@ return function(ctx)
 				tw(inputStroke, 0.2, {Color = rgb(90, 90, 120)})
 			end)
 
+			textBox:GetPropertyChangedSignal("Text"):Connect(function()
+				if callback then callback(textBox.Text, false) end
+			end)
+
 			textBox.FocusLost:Connect(function(enterPressed)
 				tw(inputStroke, 0.2, {Color = rgb(45, 45, 58)})
 				if callback then callback(textBox.Text, enterPressed) end
