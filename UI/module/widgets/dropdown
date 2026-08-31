@@ -119,7 +119,7 @@ return function(ctx)
 			end
 
 			local selectedOpt = defOpt or opts[1] or ""
-			local selectedText = getText(selectedOpt, ctx.currentLang)
+			local selectedText = selectedOpt ~= "" and getText(selectedOpt, ctx.currentLang) or getText(noneText, ctx.currentLang)
 
 			local _, _, valLabel, searchBox, scroll, filterOptions, updateHeight = buildDropdownContainer(parent, textData, selectedText)
 			local btnList = {}
