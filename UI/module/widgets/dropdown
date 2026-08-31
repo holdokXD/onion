@@ -195,7 +195,7 @@ return function(ctx)
 			local function getSelectedList()
 				local list = {}
 				for _, item in ipairs(btnList) do
-					if selectedMap[item.dispText] then table.insert(list, item.dispText) end
+					if selectedMap[item.dispText] or selectedMap[item.opt] then table.insert(list, item.dispText) end
 				end
 				return list
 			end
@@ -205,10 +205,10 @@ return function(ctx)
 				valLabel.Text = #list > 0 and table.concat(list, ", ") or getText(noneText, ctx.currentLang)
 			end
 
-			local function updateBtnStyle(dispText, btn)
-				local active = selectedMap[dispText] or false
+			local function updateBtnStyle(itemData, btn)
+				local active = selectedMap[itemData.dispText] or selectedMap[itemData.opt] or false
 				btn.BackgroundTransparency = 1
-				btn.Text = "  " .. dispText
+				btn.Text = "  " .. itemData.dispText
 				tw(btn, 0.12, {TextColor3 = active and rgb(255, 255, 255) or rgb(140, 140, 155)})
 			end
 
@@ -226,8 +226,11 @@ return function(ctx)
 
 				if type(newDef) == "table" then
 					for _, v in ipairs(newDef) do
-						local strVal = getText(v, ctx.currentLang)
-						selectedMap[strVal] = true
+						selectedMap[v] = true
+						if type(v) == "table" then
+							local resolvedText = getText(v, ctx.currentLang)
+							selectedMap[resolvedText] = true
+						end
 					end
 				end
 
@@ -236,13 +239,16 @@ return function(ctx)
 					local btn = mk("TextButton", {Size = udim2(1, 0, 0, 24), TextSize = 11, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, AutoButtonColor = false, LayoutOrder = i, ZIndex = 2000009}, scroll)
 					mk("UICorner", {CornerRadius = UDim.new(0, 6)}, btn)
 
-					table.insert(btnList, { opt = opt, btn = btn, dispText = dispText })
-					updateBtnStyle(dispText, btn)
+					local itemData = { opt = opt, btn = btn, dispText = dispText }
+					table.insert(btnList, itemData)
+					updateBtnStyle(itemData, btn)
 
 					btn.MouseButton1Click:Connect(function()
 						if ctx.isClosing() then return end
-						selectedMap[dispText] = not selectedMap[dispText]
-						updateBtnStyle(dispText, btn)
+						local currentState = selectedMap[dispText] or selectedMap[opt] or false
+						selectedMap[dispText] = not currentState
+						selectedMap[opt] = not currentState
+						updateBtnStyle(itemData, btn)
 						updateText()
 						if cb then cb(getSelectedList()) end
 					end)
