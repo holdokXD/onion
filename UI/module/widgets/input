@@ -66,7 +66,7 @@ return function(ctx)
 				if callback then callback(textBox.Text, enterPressed) end
 			end)
 
-			return textBox
+			return { Set = function(txt) textBox.Text = tostring(txt) end }
 		end
 	}
 end
