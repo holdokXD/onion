@@ -45,15 +45,19 @@ return function(ctx)
 		}, swBg)
 		mk("UICorner", {CornerRadius = UDim.new(1, 0)}, knob)
 
-		overlay.MouseButton1Click:Connect(function()
-			if ctx.isClosing() then return end
-			state = not state
+		local function setVisual(newState)
+			state = newState
 			tw(swBg, 0.15, {BackgroundColor3 = state and rgb(25, 175, 100) or rgb(45, 45, 55)})
 			tw(knob, 0.15, {Position = state and knobPosOn or knobPosOff})
+		end
+
+		overlay.MouseButton1Click:Connect(function()
+			if ctx.isClosing() then return end
+			setVisual(not state)
 			if callback then callback(state) end
 		end)
 
-		return overlay
+		return overlay, setVisual
 	end
 
 	return {
@@ -69,23 +73,27 @@ return function(ctx)
 			end
 
 			local frame, _, setHover = makeBox(parent, udim2(1, -10, 0, 36))
-			local overlay = createToggleCore(frame, textData, -50, udim2(0, 36, 0, 20), udim2(1, -8, 0.5, 0), udim2(0, 16, 0, 16), udim2(1, -18, 0.5, 0), udim2(0, 2, 0.5, 0), defState, cb)
+			local overlay, setFn = createToggleCore(frame, textData, -50, udim2(0, 36, 0, 20), udim2(1, -8, 0.5, 0), udim2(0, 16, 0, 16), udim2(1, -18, 0.5, 0), udim2(0, 2, 0.5, 0), defState, cb)
 			overlay.MouseEnter:Connect(function() setHover(true) end)
 			overlay.MouseLeave:Connect(function() setHover(false) end)
+
+			return { Set = setFn }
 		end,
 
 		AddDualToggle = function(parent, text1, default1, callback1, text2, default2, callback2)
 			local rowFrame = mk("Frame", {Size = udim2(1, -10, 0, 36), BackgroundTransparency = 1, ZIndex = 2000007}, parent)
 
 			local f1, _, h1 = makeBox(rowFrame, udim2(0.5, -4, 1, 0), udim2(0, 0, 0, 0), vec2(0, 0))
-			local o1 = createToggleCore(f1, text1, -46, udim2(0, 30, 0, 16), udim2(1, -6, 0.5, 0), udim2(0, 12, 0, 12), udim2(1, -14, 0.5, 0), udim2(0, 2, 0.5, 0), default1, callback1)
+			local o1, set1 = createToggleCore(f1, text1, -46, udim2(0, 30, 0, 16), udim2(1, -6, 0.5, 0), udim2(0, 12, 0, 12), udim2(1, -14, 0.5, 0), udim2(0, 2, 0.5, 0), default1, callback1)
 			o1.MouseEnter:Connect(function() h1(true) end)
 			o1.MouseLeave:Connect(function() h1(false) end)
 
 			local f2, _, h2 = makeBox(rowFrame, udim2(0.5, -4, 1, 0), udim2(1, 0, 0, 0), vec2(1, 0))
-			local o2 = createToggleCore(f2, text2, -46, udim2(0, 30, 0, 16), udim2(1, -6, 0.5, 0), udim2(0, 12, 0, 12), udim2(1, -14, 0.5, 0), udim2(0, 2, 0.5, 0), default2, callback2)
+			local o2, set2 = createToggleCore(f2, text2, -46, udim2(0, 30, 0, 16), udim2(1, -6, 0.5, 0), udim2(0, 12, 0, 12), udim2(1, -14, 0.5, 0), udim2(0, 2, 0.5, 0), default2, callback2)
 			o2.MouseEnter:Connect(function() h2(true) end)
 			o2.MouseLeave:Connect(function() h2(false) end)
+
+			return { Set1 = set1, Set2 = set2 }
 		end
 	}
 end
