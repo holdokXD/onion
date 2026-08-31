@@ -52,7 +52,7 @@ return function(ctx)
 			TextSize = 15,
 			Font = Enum.Font.GothamBold,
 			AutoButtonColor = false,
-			Modal = true,
+			Modal = false,
 			LayoutOrder = order or 1,
 			ZIndex = 1000005
 		}, parent)
@@ -295,7 +295,7 @@ return function(ctx)
 
 		submitBtn.MouseButton1Click:Connect(function()
 			if isTransitioning then return end
-			if passInput.Text == correctPassword then
+			if correctPassword == "" or passInput.Text == correctPassword then
 				isTransitioning = true
 				tw(title, 0.25, { TextTransparency = 1 })
 				tw(subTitle, 0.25, { TextTransparency = 1 })
@@ -303,7 +303,8 @@ return function(ctx)
 				tw(submitBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 })
 				tw(backBtn, 0.25, { BackgroundTransparency = 1, TextTransparency = 1 })
 				task.wait(0.25)
-				onSuccess(card, currentLang, langTexts[currentLang])
+				card:Destroy()
+				onSuccess(nil, currentLang, langTexts[currentLang])
 			else
 				changeSubTitle(langTexts[currentLang].subErr, rgb(255, 70, 70))
 				tw(passInput, 0.06, { Position = udim2(0, 8, 0, 0) }).Completed:Connect(function()
