@@ -316,7 +316,7 @@ return function(ctx)
 							local function wrapSingle(fn, title, ...)
 								if not fn then return end
 								local preCount = #scroll:GetChildren()
-								fn(scroll, title, ...)
+								local res = fn(scroll, title, ...)
 								local children = scroll:GetChildren()
 								if #children > preCount then
 									local created = children[#children]
@@ -327,12 +327,13 @@ return function(ctx)
 										textEn = utf8Lower(ctx.getText(title, "EN"))
 									})
 								end
+								return res
 							end
 
 							local function wrapDual(fn, title1, cb1, title2, cb2, ...)
 								if not fn then return end
 								local preCount = #scroll:GetChildren()
-								fn(scroll, title1, cb1, title2, cb2, ...)
+								local res = fn(scroll, title1, cb1, title2, cb2, ...)
 								local children = scroll:GetChildren()
 								if #children > preCount then
 									local created = children[#children]
@@ -346,19 +347,20 @@ return function(ctx)
 										subElements = getSubElements(created)
 									})
 								end
+								return res
 							end
 
 							return {
 								AddButton = function(_, t, cb) wrapSingle(Btns.AddBtn, t, cb) end,
 								AddDualButton = function(_, t1, cb1, t2, cb2) wrapDual(Btns.AddDualBtn, t1, cb1, t2, cb2) end,
-								AddToggle = function(_, t, def, cb) wrapSingle(Toggles.AddToggle, t, def, cb) end,
-								AddDualToggle = function(_, t1, d1, c1, t2, d2, c2) wrapDual(Toggles.AddDualToggle, t1, d1, c1, t2, d2, c2) end,
-								AddSlider = function(_, t, min, max, def, cb) wrapSingle(Sliders.AddSlider, t, min, max, def, cb) end,
-								AddDualSlider = function(_, t1, min1, max1, def1, cb1, t2, min2, max2, def2, cb2) wrapDual(Sliders.AddDualSlider, t1, min1, max1, def1, cb1, t2, min2, max2, def2, cb2) end,
-								AddDropdown = function(_, t, opt, def, cb) wrapSingle(Dropdowns.AddDropdown, t, opt, def, cb) end,
-								AddMultiDropdown = function(_, t, opt, def, cb) wrapSingle(Dropdowns.AddMultiDropdown, t, opt, def, cb) end,
-								AddColorPicker = function(_, t, def, cb) wrapSingle(ColorPickers.AddColorPicker, t, def, cb) end,
-								AddInput = function(_, t, p, d, cb) wrapSingle(Inputs.AddInput, t, p, d, cb) end,
+								AddToggle = function(_, t, def, cb) return wrapSingle(Toggles.AddToggle, t, def, cb) end,
+								AddDualToggle = function(_, t1, d1, c1, t2, d2, c2) return wrapDual(Toggles.AddDualToggle, t1, d1, c1, t2, d2, c2) end,
+								AddSlider = function(_, t, min, max, def, cb) return wrapSingle(Sliders.AddSlider, t, min, max, def, cb) end,
+								AddDualSlider = function(_, t1, min1, max1, def1, cb1, t2, min2, max2, def2, cb2) return wrapDual(Sliders.AddDualSlider, t1, min1, max1, def1, cb1, t2, min2, max2, def2, cb2) end,
+								AddDropdown = function(_, t, opt, def, cb) return wrapSingle(Dropdowns.AddDropdown, t, opt, def, cb) end,
+								AddMultiDropdown = function(_, t, opt, def, cb) return wrapSingle(Dropdowns.AddMultiDropdown, t, opt, def, cb) end,
+								AddColorPicker = function(_, t, def, cb) return wrapSingle(ColorPickers.AddColorPicker, t, def, cb) end,
+								AddInput = function(_, t, p, d, cb) return wrapSingle(Inputs.AddInput, t, p, d, cb) end,
 								AddLabel = function(_, t) wrapSingle(Labels.AddLabel, t) end
 							}
 						end
