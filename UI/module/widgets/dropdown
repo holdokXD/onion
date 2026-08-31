@@ -74,11 +74,9 @@ return function(ctx)
 				end
 				return
 			end
-
 			local listH = math.min(itemCount * 27, 108)
 			targetHeight = 32 + listH + 6
 			dropBody.Size = udim2(1, -16, 0, targetHeight)
-
 			if open then
 				tw(frame, 0.25, {Size = udim2(1, -10, 0, 38 + targetHeight + 6)})
 			end
@@ -120,7 +118,6 @@ return function(ctx)
 
 			local selectedOpt = defOpt or opts[1] or ""
 			local selectedText = selectedOpt ~= "" and getText(selectedOpt, ctx.currentLang) or getText(noneText, ctx.currentLang)
-
 			local _, _, valLabel, searchBox, scroll, filterOptions, updateHeight = buildDropdownContainer(parent, textData, selectedText)
 			local btnList = {}
 
@@ -133,14 +130,12 @@ return function(ctx)
 			local dropdownObj = {}
 
 			local function populate(newOpts, newDef)
-				-- Чистим старые кнопки и предотвращаем утечку памяти
 				for _, item in ipairs(btnList) do
 					if item.btn and item.btn.Parent then
 						item.btn:Destroy()
 					end
 				end
 				btnList = {}
-
 				opts = newOpts or {}
 				selectedOpt = newDef or opts[1] or ""
 				selectedText = (selectedOpt and selectedOpt ~= "") and getText(selectedOpt, ctx.currentLang) or getText(noneText, ctx.currentLang)
@@ -163,7 +158,6 @@ return function(ctx)
 						if cb then cb(dispText) end
 					end)
 				end
-
 				updateHeight(#opts)
 			end
 
@@ -172,6 +166,10 @@ return function(ctx)
 
 			function dropdownObj:Refresh(newOpts, newDef)
 				populate(newOpts, newDef)
+			end
+
+			function dropdownObj:Set(newDef)
+				populate(opts, newDef)
 			end
 
 			return dropdownObj
@@ -224,8 +222,8 @@ return function(ctx)
 				end
 				btnList = {}
 				selectedMap = {}
-
 				opts = newOpts or {}
+
 				if type(newDef) == "table" then
 					for _, v in ipairs(newDef) do
 						local strVal = getText(v, ctx.currentLang)
@@ -249,7 +247,6 @@ return function(ctx)
 						if cb then cb(getSelectedList()) end
 					end)
 				end
-
 				updateText()
 				updateHeight(#opts)
 			end
@@ -259,6 +256,10 @@ return function(ctx)
 
 			function dropdownObj:Refresh(newOpts, newDef)
 				populate(newOpts, newDef)
+			end
+
+			function dropdownObj:Set(newDef)
+				populate(opts, newDef)
 			end
 
 			return dropdownObj
